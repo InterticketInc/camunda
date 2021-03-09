@@ -18,13 +18,13 @@ type Deployment struct {
 // ResDeployment a JSON array of deployment objects
 type ResDeployment struct {
 	// The id of the deployment
-	Id string `json:"id"`
+	ID string `json:"id"`
 	// The name of the deployment
 	Name string `json:"name"`
 	// The source of the deployment
 	Source string `json:"source"`
 	// The tenant id of the deployment
-	TenantId string `json:"tenantId"`
+	TenantID string `json:"tenantId"`
 	// The date and time of the deployment.
 	DeploymentTime Time `json:"deploymentTime"`
 }
@@ -32,13 +32,13 @@ type ResDeployment struct {
 // ResDeploymentCreate a JSON object corresponding to the DeploymentWithDefinitions interface in the engine
 type ResDeploymentCreate struct {
 	// The id of the deployment
-	Id string `json:"id"`
+	ID string `json:"id"`
 	// The name of the deployment
 	Name string `json:"name"`
 	// The source of the deployment
 	Source string `json:"source"`
 	// The tenant id of the deployment
-	TenantId string `json:"tenant_id"`
+	TenantID string `json:"tenant_id"`
 	// The time when the deployment was created
 	DeploymentTime Time `json:"deployment_time"`
 	// Link to the newly created deployment with method, href and rel
@@ -63,7 +63,7 @@ type ReqDeploymentCreate struct {
 	EnableDuplicateFiltering *bool
 	DeployChangedOnly        *bool
 	DeploymentSource         *string
-	TenantId                 *string
+	TenantID                 *string
 	Resources                map[string]interface{}
 }
 
@@ -80,11 +80,11 @@ type ReqRedeploy struct {
 // ResDeploymentResource a JSON array containing all deployment resources of the given deployment
 type ResDeploymentResource struct {
 	// The id of the deployment resource
-	Id string `json:"id"`
+	ID string `json:"id"`
 	// The name of the deployment resource
 	Name string `json:"name"`
 	// The id of the deployment
-	DeploymentId string `json:"deploymentId"`
+	DeploymentID string `json:"deploymentId"`
 }
 
 // GetList a queries for deployments that fulfill given parameters. Parameters may be the properties of deployments,
@@ -127,41 +127,41 @@ func (d *Deployment) Get(id string) (deployment ResDeployment, err error) {
 }
 
 // Create creates a deployment
-func (d *Deployment) Create(deploymentCreate ReqDeploymentCreate) (deployment *ResDeploymentCreate, err error) {
+func (d *Deployment) Create(dc *ReqDeploymentCreate) (deployment *ResDeploymentCreate, err error) {
 	deployment = &ResDeploymentCreate{}
 	var data []byte
 	body := bytes.NewBuffer(data)
 	w := multipart.NewWriter(body)
 
-	if err = w.WriteField("deployment-name", deploymentCreate.DeploymentName); err != nil {
+	if err = w.WriteField("deployment-name", dc.DeploymentName); err != nil {
 		return nil, err
 	}
 
-	if deploymentCreate.EnableDuplicateFiltering != nil {
-		if err = w.WriteField("enable-duplicate-filtering", strconv.FormatBool(*deploymentCreate.EnableDuplicateFiltering)); err != nil {
+	if dc.EnableDuplicateFiltering != nil {
+		if err = w.WriteField("enable-duplicate-filtering", strconv.FormatBool(*dc.EnableDuplicateFiltering)); err != nil {
 			return nil, err
 		}
 	}
 
-	if deploymentCreate.DeployChangedOnly != nil {
-		if err = w.WriteField("deploy-changed-only", strconv.FormatBool(*deploymentCreate.DeployChangedOnly)); err != nil {
+	if dc.DeployChangedOnly != nil {
+		if err = w.WriteField("deploy-changed-only", strconv.FormatBool(*dc.DeployChangedOnly)); err != nil {
 			return nil, err
 		}
 	}
 
-	if deploymentCreate.DeploymentSource != nil {
-		if err = w.WriteField("deployment-source", *deploymentCreate.DeploymentSource); err != nil {
+	if dc.DeploymentSource != nil {
+		if err = w.WriteField("deployment-source", *dc.DeploymentSource); err != nil {
 			return nil, err
 		}
 	}
 
-	if deploymentCreate.TenantId != nil {
-		if err = w.WriteField("tenant-id", *deploymentCreate.TenantId); err != nil {
+	if dc.TenantID != nil {
+		if err = w.WriteField("tenant-id", *dc.TenantID); err != nil {
 			return nil, err
 		}
 	}
 
-	for key, resource := range deploymentCreate.Resources {
+	for key, resource := range dc.Resources {
 		var fw io.Writer
 
 		if x, ok := resource.(io.Closer); ok {
@@ -226,9 +226,9 @@ func (d *Deployment) GetResources(id string) (resources []*ResDeploymentResource
 }
 
 // GetResource retrieves a deployment resource by resource id for the given deployment
-func (d *Deployment) GetResource(id, resourceId string) (resource *ResDeploymentResource, err error) {
+func (d *Deployment) GetResource(id, resourceID string) (resource *ResDeploymentResource, err error) {
 	resource = &ResDeploymentResource{}
-	res, err := d.client.Get("/deployment/"+id+"/resources/"+resourceId, map[string]string{})
+	res, err := d.client.Get("/deployment/"+id+"/resources/"+resourceID, map[string]string{})
 	if err != nil {
 		return
 	}
@@ -238,8 +238,8 @@ func (d *Deployment) GetResource(id, resourceId string) (resource *ResDeployment
 }
 
 // GetResourceBinary retrieves the binary content of a deployment resource for the given deployment by id
-func (d *Deployment) GetResourceBinary(id, resourceId string) (data []byte, err error) {
-	res, err := d.client.Get("/deployment/"+id+"/resources/"+resourceId+"/data", map[string]string{})
+func (d *Deployment) GetResourceBinary(id, resourceID string) (data []byte, err error) {
+	res, err := d.client.Get("/deployment/"+id+"/resources/"+resourceID+"/data", map[string]string{})
 	if err != nil {
 		return
 	}
