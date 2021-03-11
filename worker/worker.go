@@ -7,7 +7,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/paalgyula/camunda"
+	"go.pirat.app/pi/camunda"
 )
 
 // Worker external task worker

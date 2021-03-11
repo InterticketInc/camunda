@@ -1,6 +1,6 @@
 package worker
 
-import "github.com/paalgyula/camunda"
+import "go.pirat.app/pi/camunda"
 
 // CompleteRequest a query for Complete request
 type CompleteRequest struct {
