@@ -19,11 +19,11 @@ type ResExternalTask struct {
 // QueryGetListPost a query for ListPost request
 type QueryGetListPost struct {
 	// Filter by an external task's id
-	ExternalTaskId *string `json:"externalTaskId,omitempty"`
+	ExternalTaskID *string `json:"externalTaskId,omitempty"`
 	// Filter by an external task topic
 	TopicName *string `json:"topicName,omitempty"`
 	// Filter by the id of the worker that the task was most recently locked by
-	WorkerId *string `json:"workerId,omitempty"`
+	WorkerID *string `json:"workerId,omitempty"`
 	// Only include external tasks that are currently locked (i.e., they have a lock time and it has not expired).
 	// Value may only be true, as false matches any external task
 	Locked *bool `json:"locked,omitempty"`
@@ -42,17 +42,17 @@ type QueryGetListPost struct {
 	// the date must have the format yyyy-MM-dd'T'HH:mm:ss.SSSZ, e.g., 2013-01-23T14:42:45.000+0200
 	LockExpirationBefore *Time `json:"lockExpirationBefore,omitempty"`
 	// Filter by the id of the activity that an external task is created for
-	ActivityId *string `json:"activityId,omitempty"`
+	ActivityID *string `json:"activityId,omitempty"`
 	// Filter by the comma-separated list of ids of the activities that an external task is created for
-	ActivityIdIn *string `json:"activityIdIn,omitempty"`
+	ActivityIDIn *string `json:"activityIdIn,omitempty"`
 	// Filter by the id of the execution that an external task belongs to
-	ExecutionId *string `json:"executionId,omitempty"`
+	ExecutionID *string `json:"executionId,omitempty"`
 	// Filter by the id of the process instance that an external task belongs to
-	ProcessInstanceId *string `json:"processInstanceId,omitempty"`
+	ProcessInstanceID *string `json:"processInstanceId,omitempty"`
 	// Filter by the id of the process definition that an external task belongs to
-	ProcessDefinitionId *string `json:"processDefinitionId,omitempty"`
+	ProcessDefinitionID *string `json:"processDefinitionId,omitempty"`
 	// Filter by a comma-separated list of tenant ids. An external task must have one of the given tenant ids
-	TenantIdIn *string `json:"tenantIdIn,omitempty"`
+	TenantIDIn *string `json:"tenantIdIn,omitempty"`
 	// Only include active tasks. Value may only be true, as false matches any external task
 	Active *bool `json:"active,omitempty"`
 	// Only include suspended tasks. Value may only be true, as false matches any external task
@@ -71,7 +71,7 @@ type QueryGetListPost struct {
 type QueryFetchAndLock struct {
 	// Mandatory. The id of the worker on which behalf tasks are fetched. The returned tasks are locked
 	// for that worker and can only be completed when providing the same worker id
-	WorkerId string `json:"workerId"`
+	WorkerID string `json:"workerId"`
 	// Mandatory. The maximum number of tasks to return
 	MaxTasks int `json:"maxTasks"`
 	// A boolean value, which indicates whether the task should be fetched based on its priority or arbitrarily
@@ -99,17 +99,17 @@ type QueryFetchAndLockTopic struct {
 	// A String value which enables the filtering of tasks based on process instance business key
 	BusinessKey *string `json:"businessKey,omitempty"`
 	// Filter tasks based on process definition id
-	ProcessDefinitionId *string `json:"processDefinitionId,omitempty"`
+	ProcessDefinitionID *string `json:"processDefinitionId,omitempty"`
 	// Filter tasks based on process definition ids
-	ProcessDefinitionIdIn *string `json:"processDefinitionIdIn,omitempty"`
+	ProcessDefinitionIDIn *string `json:"processDefinitionIdIn,omitempty"`
 	// Filter tasks based on process definition key
 	ProcessDefinitionKey *string `json:"processDefinitionKey,omitempty"`
 	// Filter tasks based on process definition keys
 	ProcessDefinitionKeyIn *string `json:"processDefinitionKeyIn,omitempty"`
 	// 	Filter tasks without tenant id
-	WithoutTenantId *string `json:"withoutTenantId,omitempty"`
+	WithoutTenantID *string `json:"withoutTenantId,omitempty"`
 	// Filter tasks based on tenant ids
-	TenantIdIn *string `json:"tenantIdIn,omitempty"`
+	TenantIDIn *string `json:"tenantIdIn,omitempty"`
 	// A JSON object used for filtering tasks based on process instance variable values.
 	// A property name of the object represents a process variable name, while the property value
 	// represents the process variable value to filter tasks by
@@ -178,7 +178,7 @@ type ValueInfo struct {
 type QueryComplete struct {
 	// The id of the worker that completes the task.
 	// Must match the id of the worker who has most recently locked the task
-	WorkerId *string `json:"workerId,omitempty"`
+	WorkerID *string `json:"workerId,omitempty"`
 	// A JSON object containing variable key-value pairs
 	Variables map[string]*Variable `json:"variables"`
 	// A JSON object containing variable key-value pairs.
@@ -190,7 +190,7 @@ type QueryComplete struct {
 type QueryHandleBPMNError struct {
 	// The id of the worker that reports the failure.
 	// Must match the id of the worker who has most recently locked the task
-	WorkerId *string `json:"workerId,omitempty"`
+	WorkerID *string `json:"workerId,omitempty"`
 	// An error code that indicates the predefined error. Is used to identify the BPMN error handler
 	ErrorCode *string `json:"errorCode,omitempty"`
 	// An error message that describes the error
@@ -204,7 +204,7 @@ type QueryHandleBPMNError struct {
 type QueryHandleFailure struct {
 	// The id of the worker that reports the failure.
 	// Must match the id of the worker who has most recently locked the task
-	WorkerId *string `json:"workerId,omitempty"`
+	WorkerID *string `json:"workerId,omitempty"`
 	// An message indicating the reason of the failure
 	ErrorMessage *string `json:"errorMessage,omitempty"`
 	// A detailed error description
@@ -222,7 +222,7 @@ type QueryExtendLock struct {
 	//	An amount of time (in milliseconds). This is the new lock duration starting from the current moment
 	NewDuration *int `json:"newDuration,omitempty"`
 	// The ID of a worker who is locking the external task
-	WorkerId *string `json:"workerId,omitempty"`
+	WorkerID *string `json:"workerId,omitempty"`
 }
 
 // QuerySetRetriesAsync a query for SetRetriesAsync request
@@ -245,7 +245,7 @@ type QuerySetRetriesAsync struct {
 // ResBatch a JSON object corresponding to the Batch interface in the engine
 type ResBatch struct {
 	// The id of the created batch
-	Id string `json:"id"`
+	ID string `json:"id"`
 	// The type of the created batch
 	Type string `json:"type"`
 	// The total jobs of a batch is the number of batch execution jobs required to complete the batch
@@ -258,13 +258,13 @@ type ResBatch struct {
 	// migrated per batch execution job
 	InvocationsPerBatchJob int `json:"invocationsPerBatchJob"`
 	// The job definition id for the seed jobs of this batch
-	SeedJobDefinitionId string `json:"seedJobDefinitionId"`
+	SeedJobDefinitionID string `json:"seedJobDefinitionId"`
 	// The job definition id for the monitor jobs of this batch
-	MonitorJobDefinitionId string `json:"monitorJobDefinitionId"`
+	MonitorJobDefinitionID string `json:"monitorJobDefinitionId"`
 	// The job definition id for the batch execution jobs of this batch
-	BatchJobDefinitionId string `json:"batchJobDefinitionId"`
+	BatchJobDefinitionID string `json:"batchJobDefinitionId"`
 	// The tenant id of the batch
-	TenantId string `json:"tenantId"`
+	TenantID string `json:"tenantId"`
 }
 
 // QuerySetRetriesSync a query for SetRetriesSync request

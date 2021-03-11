@@ -20,7 +20,7 @@ type Worker struct {
 // Options options for Worker
 type Options struct {
 	// workerId for all request (default: `worker-{random_int}`)
-	WorkerId string
+	WorkerID string
 	// lock duration for all external task
 	LockDuration time.Duration
 	// maximum tasks to receive for 1 request to camunda
@@ -35,9 +35,9 @@ type Options struct {
 
 // NewWorker a create new instance Worker
 func NewWorker(client *camunda.Client, options *Options, logger func(err error)) *Worker {
-	if options.WorkerId == "" {
+	if options.WorkerID == "" {
 		rand.Seed(time.Now().UnixNano())
-		options.WorkerId = fmt.Sprintf("worker-%d", rand.Int())
+		options.WorkerID = fmt.Sprintf("worker-%d", rand.Int())
 	}
 
 	return &Worker{
@@ -59,7 +59,7 @@ type Context struct {
 // Complete a mark external task is complete
 func (c *Context) Complete(query CompleteRequest) error {
 	return c.client.ExternalTask.Complete(c.Task.Id, camunda.QueryComplete{
-		WorkerId:       &c.Task.WorkerID,
+		WorkerID:       &c.Task.WorkerID,
 		Variables:      query.Variables,
 		LocalVariables: query.LocalVariables,
 	})
@@ -68,7 +68,7 @@ func (c *Context) Complete(query CompleteRequest) error {
 // HandleBPMNError handle external task BPMN error
 func (c *Context) HandleBPMNError(query QueryHandleBPMNError) error {
 	return c.client.ExternalTask.HandleBPMNError(c.Task.Id, camunda.QueryHandleBPMNError{
-		WorkerId:     &c.Task.WorkerID,
+		WorkerID:     &c.Task.WorkerID,
 		ErrorCode:    query.ErrorCode,
 		ErrorMessage: query.ErrorMessage,
 		Variables:    query.Variables,
@@ -78,7 +78,7 @@ func (c *Context) HandleBPMNError(query QueryHandleBPMNError) error {
 // HandleFailure handle external task failure
 func (c *Context) HandleFailure(query QueryHandleFailure) error {
 	return c.client.ExternalTask.HandleFailure(c.Task.Id, camunda.QueryHandleFailure{
-		WorkerId:     &c.Task.WorkerID,
+		WorkerID:     &c.Task.WorkerID,
 		ErrorMessage: query.ErrorMessage,
 		ErrorDetails: query.ErrorDetails,
 		Retries:      query.Retries,
@@ -103,7 +103,7 @@ func (p *Worker) AddHandler(topics *[]camunda.QueryFetchAndLockTopic, handler Ha
 	asyncResponseTimeout = &msValue
 
 	go p.startPuller(camunda.QueryFetchAndLock{
-		WorkerId:             p.options.WorkerId,
+		WorkerID:             p.options.WorkerID,
 		MaxTasks:             p.options.MaxTasks,
 		UsePriority:          p.options.UsePriority,
 		AsyncResponseTimeout: asyncResponseTimeout,
@@ -129,8 +129,9 @@ func (p *Worker) startPuller(query camunda.QueryFetchAndLock, handler Handler) {
 		tasks, err := p.client.ExternalTask.FetchAndLock(query)
 		if err != nil {
 			if retries < 60 {
-				retries += 1
+				retries++
 			}
+
 			p.logger(fmt.Errorf("failed pull: %w, sleeping: %d seconds", err, retries))
 			time.Sleep(time.Duration(retries) * time.Second)
 			continue
