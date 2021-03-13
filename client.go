@@ -32,15 +32,15 @@ type ClientOptions struct {
 // Client a client for Camunda API
 type Client struct {
 	httpClient  *http.Client
-	endpointUrl string
+	endpointURL string
 	userAgent   string
 	apiUser     string
 	apiPassword string
 
-	ExternalTask      *ExternalTask
-	Deployment        *Deployment
-	ProcessDefinition *ProcessDefinition
-	UserTask          *userTaskApi
+	// ExternalTask      *ExternalTask
+	// Deployment        *Deployment
+	// ProcessDefinition *ProcessDefinition
+	// UserTask          *userTaskApi
 }
 
 var ErrorNotFound = &Error{
@@ -91,14 +91,14 @@ func NewClient(options *ClientOptions) *Client {
 		httpClient: &http.Client{
 			Timeout: time.Second * DefaultTimeoutSec,
 		},
-		endpointUrl: DefaultEndpointUrl,
+		endpointURL: DefaultEndpointUrl,
 		userAgent:   DefaultUserAgent,
 		apiUser:     options.ApiUser,
 		apiPassword: options.ApiPassword,
 	}
 
 	if options.EndpointUrl != "" {
-		client.endpointUrl = options.EndpointUrl
+		client.endpointURL = options.EndpointUrl
 	}
 
 	if options.UserAgent != "" {
@@ -109,12 +109,13 @@ func NewClient(options *ClientOptions) *Client {
 		client.httpClient.Timeout = options.Timeout
 	}
 
-	client.ExternalTask = &ExternalTask{client: client}
-	client.Deployment = &Deployment{client: client}
-	client.ProcessDefinition = &ProcessDefinition{client: client}
-	client.UserTask = &userTaskApi{client: client}
-
 	return client
+}
+
+func (c *Client) DeployManager() *DeployManager {
+	return &DeployManager{
+		client: c,
+	}
 }
 
 // SetCustomTransport set new custom transport
@@ -231,16 +232,11 @@ func (c *Client) Marshal(res *http.Response, v interface{}) error {
 	return nil
 }
 
-// Publishes a new deployment
-func Deploy() error {
-	panic("implement")
-}
-
 func (c *Client) buildURL(path string, query map[string]string) (string, error) {
 	if len(query) == 0 {
-		return c.endpointUrl + path, nil
+		return c.endpointURL + path, nil
 	}
-	url, err := url.Parse(c.endpointUrl + path)
+	url, err := url.Parse(c.endpointURL + path)
 	if err != nil {
 		return "", err
 	}

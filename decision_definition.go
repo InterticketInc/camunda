@@ -1,7 +1,7 @@
 package camunda
 
-// ResDecisionDefinition a JSON object corresponding to the DecisionDefinition interface in the engine
-type ResDecisionDefinition struct {
+// DecisionDefinition a JSON object corresponding to the DecisionDefinition interface in the engine
+type DecisionDefinition struct {
 	// The id of the decision definition
 	Id string `json:"id"`
 	// The key of the decision definition, i.e., the id of the DMN 1.0 XML decision definition
