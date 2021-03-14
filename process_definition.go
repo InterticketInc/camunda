@@ -1,16 +1,9 @@
 package camunda
 
-import "io/ioutil"
-
-// ProcessManager a client for ProcessManager
-type ProcessManager struct {
-	client *Client
-}
-
-// ResProcessDefinition a JSON object corresponding to the ProcessDefinition interface in the engine
-type ResProcessDefinition struct {
+// ProcessDefinitionResponse a JSON object corresponding to the ProcessDefinition interface in the engine
+type ProcessDefinitionResponse struct {
 	// The id of the process definition
-	Id string `json:"id"`
+	ID string `json:"id"`
 	// The key of the process definition, i.e., the id of the BPMN 2.0 XML process definition
 	Key string `json:"key"`
 	// The category of the process definition
@@ -24,19 +17,19 @@ type ResProcessDefinition struct {
 	// The file name of the process definition
 	Resource string `json:"resource"`
 	// The deployment id of the process definition
-	DeploymentId string `json:"deploymentId"`
+	DeploymentID string `json:"deploymentId"`
 	// The file name of the process definition diagram, if it exists
 	Diagram string `json:"diagram"`
 	// A flag indicating whether the definition is suspended or not
 	Suspended bool `json:"suspended"`
 	// The tenant id of the process definition
-	TenantId string `json:"tenantId"`
+	TenantID string `json:"tenantId"`
 	// The version tag of the process definition
 	VersionTag string `json:"versionTag"`
 	// History time to live value of the process definition. Is used within History cleanup
 	HistoryTimeToLive int `json:"historyTimeToLive"`
 	// A flag indicating whether the process definition is startable in Tasklist or not
-	StartableInTasklist bool `json:"startableInTasklist"`
+	StartableInTaskList bool `json:"startableInTasklist"`
 }
 
 // ResActivityInstanceStatistics a JSON array containing statistics results per activity
@@ -62,7 +55,7 @@ type ResInstanceStatistics struct {
 	// Note: Will be 0 (not null), if failed jobs were excluded
 	FailedJobs int `json:"failedJobs"`
 	// The process definition with the properties as described in the Get single definition method
-	Definition ResProcessDefinition `json:"definition"`
+	Definition ProcessDefinitionResponse `json:"definition"`
 	// Each item in the resulting array is an object which contains the following properties
 	Incidents []ResActivityInstanceStatisticsIncident `json:"incidents"`
 }
@@ -74,71 +67,6 @@ type ResActivityInstanceStatisticsIncident struct {
 	IncidentType string `json:"incidentType"`
 	// The total number of incidents for the corresponding incident type
 	IncidentCount int `json:"incidentCount"`
-}
-
-// ReqStartInstance a JSON object with the following properties: (at least an empty JSON object {}
-// or an empty request body)
-type ReqStartInstance struct {
-	// A JSON object containing the variables the process is to be initialized with
-	Variables *map[string]Variable `json:"variables,omitempty"`
-	// The business key the process instance is to be initialized with.
-	// The business key uniquely identifies the process instance in the context of the given process definition
-	BusinessKey *string `json:"businessKey,omitempty"`
-	// The case instance id the process instance is to be initialized with
-	CaseInstanceId *string `json:"caseInstanceId,omitempty"`
-	// Optional. A JSON array of instructions that specify which activities to start the process instance at.
-	// If this property is omitted, the process instance starts at its default blank start event
-	StartInstructions *[]ReqStartInstructions `json:"startInstructions,omitempty"`
-	// Skip execution listener invocation for activities that are started or ended as part of this request
-	// Note: This option is currently only respected when start instructions are submitted via
-	// the startInstructions property
-	SkipCustomListeners *bool `json:"skipCustomListeners,omitempty"`
-	// Skip execution of input/output variable mappings for activities that are started or ended as part of this request
-	// Note: This option is currently only respected when start instructions are submitted via
-	// the startInstructions property
-	SkipIoMappings *bool `json:"skipIoMappings,omitempty"`
-	// Indicates if the variables, which was used by the process instance during execution, should be returned. Default value: false
-	WithVariablesInReturn *bool `json:"withVariablesInReturn,omitempty"`
-}
-
-// ReqRestartInstance a request to restart instance
-type ReqRestartInstance struct {
-	// A list of process instance ids to restart
-	ProcessInstanceIds *string `json:"processInstanceIds,omitempty"`
-	// A historic process instance query like the request body described by POST /history/process-instance
-	HistoricProcessInstanceQuery *string `json:"historicProcessInstanceQuery,omitempty"`
-	// Optional. A JSON array of instructions that specify which activities to start the process instance at.
-	// If this property is omitted, the process instance starts at its default blank start event
-	StartInstructions *[]ReqStartInstructions `json:"startInstructions,omitempty"`
-	// Skip execution listener invocation for activities that are started or ended as part of this request
-	// Note: This option is currently only respected when start instructions are submitted via
-	// the startInstructions property
-	SkipCustomListeners *bool `json:"skipCustomListeners,omitempty"`
-	// Skip execution of input/output variable mappings for activities that are started or ended as part of this request
-	// Note: This option is currently only respected when start instructions are submitted via
-	// the startInstructions property
-	SkipIoMappings *bool `json:"skipIoMappings,omitempty"`
-	// Set the initial set of variables during restart. By default, the last set of variables is used
-	InitialVariables *bool `json:"initialVariables,omitempty"`
-	// Do not take over the business key of the historic process instance.
-	WithoutBusinessKey *bool `json:"withoutBusinessKey,omitempty"`
-}
-
-// ReqStartInstructions a JSON array of instructions that specify which activities to start the process instance at
-type ReqStartInstructions struct {
-	// Mandatory. One of the following values: startBeforeActivity, startAfterActivity, startTransition.
-	// A startBeforeActivity instruction requests to start execution before entering a given activity.
-	// A startAfterActivity instruction requests to start at the single outgoing sequence flow of a given activity.
-	// A startTransition instruction requests to execute a specific sequence flow
-	Type string `json:"type"`
-	// Can be used with instructions of types startBeforeActivity and startAfterActivity.
-	// Specifies the activity the instruction targets
-	ActivityId *string `json:"activityId,omitempty"`
-	// Can be used with instructions of types startTransition. Specifies the sequence flow to start
-	TransitionId *string `json:"transitionId,omitempty"`
-	// Can be used with instructions of type startBeforeActivity, startAfterActivity, and startTransition.
-	// A JSON object containing variable key-value pairs
-	Variables *map[string]VariableSet `json:"variables,omitempty"`
 }
 
 // QueryProcessDefinitionBy path builder
@@ -252,235 +180,4 @@ type ReqActivateOrSuspendByKey struct {
 	// of the given process definition is updated immediately. The date must have the format yyyy-MM-dd'T'HH:mm:ss,
 	// e.g., 2013-01-23T14:42:45
 	ExecutionDate *Time `json:"executionDate,omitempty"`
-}
-
-// GetActivityInstanceStatistics retrieves runtime statistics of a given process definition, grouped by activities.
-// These statistics include the number of running activity instances, optionally the number of failed jobs
-// and also optionally the number of incidents either grouped by incident types or for a specific incident type.
-// Note: This does not include historic data
-// https://docs.camunda.org/manual/latest/reference/rest/process-definition/get-activity-statistics/#query-parameters
-func (p *ProcessManager) GetActivityInstanceStatistics(by QueryProcessDefinitionBy, query map[string]string) (statistic []*ResActivityInstanceStatistics, err error) {
-	res, err := p.client.Get("/process-definition/"+by.String()+"/statistics", query)
-	if err != nil {
-		return
-	}
-
-	err = p.client.Marshal(res, &statistic)
-	return
-}
-
-// GetDiagram retrieves the diagram of a process definition.
-// If the process definition’s deployment contains an image resource with the same file name as the process definition,
-// the deployed image will be returned by the Get Diagram endpoint. Example: someProcess.bpmn and someProcess.png.
-// Supported file extentions for the image are: svg, png, jpg, and gif
-func (p *ProcessManager) GetDiagram(by QueryProcessDefinitionBy) (data []byte, err error) {
-	res, err := p.client.Get("/process-definition/"+by.String()+"/diagram", map[string]string{})
-	if err != nil {
-		return
-	}
-
-	defer res.Body.Close()
-	return ioutil.ReadAll(res.Body)
-}
-
-// GetStartFormVariables Retrieves the start form variables for a process definition
-// (only if they are defined via the Generated Task Form approach). The start form variables take form data specified
-// on the start event into account. If form fields are defined, the variable types and default values of the form
-// fields are taken into account
-// https://docs.camunda.org/manual/latest/reference/rest/process-definition/get-form-variables/#query-parameters
-func (p *ProcessManager) GetStartFormVariables(by QueryProcessDefinitionBy, query map[string]string) (variables map[string]Variable, err error) {
-	res, err := p.client.Get("/process-definition/"+by.String()+"/form-variables", query)
-	if err != nil {
-		return
-	}
-
-	err = p.client.Marshal(res, &variables)
-	return
-}
-
-// GetListCount requests the number of process definitions that fulfill the query criteria.
-// Takes the same filtering parameters as the Get Definitions method
-// https://docs.camunda.org/manual/latest/reference/rest/process-definition/get-query-count/#query-parameters
-func (p *ProcessManager) GetListCount(query map[string]string) (count int, err error) {
-	resCount := ResponseCount{}
-	res, err := p.client.Get("/process-definition/count", query)
-	if err != nil {
-		return
-	}
-
-	err = p.client.Marshal(res, &resCount)
-	return resCount.Count, err
-}
-
-// GetList queries for process definitions that fulfill given parameters.
-// Parameters may be the properties of process definitions, such as the name, key or version.
-// The size of the result set can be retrieved by using the Get Definition Count method
-// https://docs.camunda.org/manual/latest/reference/rest/process-definition/get-query/#query-parameters
-func (p *ProcessManager) GetList(query map[string]string) (processDefinitions []*ResProcessDefinition, err error) {
-	res, err := p.client.Get("/process-definition", query)
-	if err != nil {
-		return
-	}
-
-	err = p.client.Marshal(res, &processDefinitions)
-	return
-}
-
-// GetRenderedStartForm retrieves the rendered form for a process definition.
-// This method can be used for getting the HTML rendering of a Generated Task Form
-func (p *ProcessManager) GetRenderedStartForm(by QueryProcessDefinitionBy) (htmlForm string, err error) {
-	res, err := p.client.Get("/process-definition/"+by.String()+"/rendered-form", map[string]string{})
-	if err != nil {
-		return
-	}
-
-	defer res.Body.Close()
-	rawData, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return
-	}
-
-	return string(rawData), nil
-}
-
-// GetStartFormKey retrieves the key of the start form for a process definition.
-// The form key corresponds to the FormData#formKey property in the engine
-func (p *ProcessManager) GetStartFormKey(by QueryProcessDefinitionBy) (resp *ResGetStartFormKey, err error) {
-	resp = &ResGetStartFormKey{}
-	res, err := p.client.Get("/process-definition/"+by.String()+"/startForm", map[string]string{})
-	if err != nil {
-		return
-	}
-
-	err = p.client.Marshal(res, &resp)
-	return
-}
-
-// GetProcessInstanceStatistics retrieves runtime statistics of the process engine, grouped by process definitions.
-// These statistics include the number of running process instances, optionally the number of failed jobs and also optionally the number of incidents either grouped by incident types or for a specific incident type.
-// Note: This does not include historic data
-// https://docs.camunda.org/manual/latest/reference/rest/process-definition/get-statistics/#query-parameters
-func (p *ProcessManager) GetProcessInstanceStatistics(query map[string]string) (statistic []*ResInstanceStatistics, err error) {
-	res, err := p.client.Get("/process-definition/statistics", query)
-	if err != nil {
-		return
-	}
-
-	err = p.client.Marshal(res, &statistic)
-	return
-}
-
-// GetXML retrieves the BPMN 2.0 XML of a process definition
-func (p *ProcessManager) GetXML(by QueryProcessDefinitionBy) (resp *ResBPMNProcessDefinition, err error) {
-	resp = &ResBPMNProcessDefinition{}
-	res, err := p.client.Get("/process-definition/"+by.String()+"/xml", map[string]string{})
-	if err != nil {
-		return
-	}
-
-	err = p.client.Marshal(res, &resp)
-	return
-}
-
-// Get retrieves a process definition according to the ProcessDefinition interface in the engine
-func (p *ProcessManager) Get(by QueryProcessDefinitionBy) (processDefinition *ResProcessDefinition, err error) {
-	processDefinition = &ResProcessDefinition{}
-	res, err := p.client.Get("/process-definition/"+by.String(), map[string]string{})
-	if err != nil {
-		return
-	}
-
-	err = p.client.Marshal(res, &processDefinition)
-	return
-}
-
-// StartInstance instantiates a given process definition. Process variables and business key may be supplied
-// in the request body
-func (p *ProcessManager) StartInstance(by QueryProcessDefinitionBy, req ReqStartInstance) (processDefinition *ResStartedProcessDefinition, err error) {
-	processDefinition = &ResStartedProcessDefinition{}
-	res, err := p.client.post("/process-definition/"+by.String()+"/start", map[string]string{}, &req)
-	if err != nil {
-		return
-	}
-
-	err = p.client.Marshal(res, processDefinition)
-	return
-}
-
-// SubmitStartForm starts a process instance using a set of process variables and the business key.
-// If the start event has Form Field Metadata defined, the process engine will perform backend validation for any form
-// fields which have validators defined. See Documentation on Generated Task Forms
-func (p *ProcessManager) SubmitStartForm(by QueryProcessDefinitionBy, req ReqSubmitStartForm) (reps *ResSubmitStartForm, err error) {
-	reps = &ResSubmitStartForm{}
-	res, err := p.client.post("/process-definition/"+by.String()+"/submit-form", map[string]string{}, &req)
-	if err != nil {
-		return
-	}
-
-	err = p.client.Marshal(res, reps)
-	return
-}
-
-// ActivateOrSuspendById activates or suspends a given process definition by id or by latest version
-// of process definition key
-func (p *ProcessManager) ActivateOrSuspendById(by QueryProcessDefinitionBy, req ReqActivateOrSuspendById) error {
-	return p.client.doPutJSON("/process-definition/"+by.String()+"/suspended", map[string]string{}, &req)
-}
-
-// ActivateOrSuspendByKey activates or suspends process definitions with the given process definition key
-func (p *ProcessManager) ActivateOrSuspendByKey(req ReqActivateOrSuspendByKey) error {
-	return p.client.doPutJSON("/process-definition/suspended", map[string]string{}, &req)
-}
-
-// UpdateHistoryTimeToLive updates history time to live for process definition.
-// The field is used within History cleanup
-func (p *ProcessManager) UpdateHistoryTimeToLive(by QueryProcessDefinitionBy, historyTimeToLive int) error {
-	return p.client.doPutJSON("/process-definition/"+by.String()+"/history-time-to-live", map[string]string{}, &map[string]int{"historyTimeToLive": historyTimeToLive})
-}
-
-// Delete deletes a process definition from a deployment by id
-// https://docs.camunda.org/manual/latest/reference/rest/process-definition/delete-process-definition/#query-parameters
-func (p *ProcessManager) Delete(by QueryProcessDefinitionBy, query map[string]string) error {
-	_, err := p.client.delete("/process-definition/"+by.String(), query)
-	return err
-}
-
-// GetDeployedStartForm retrieves the deployed form that can be referenced from a start event. For further information please refer to User Guide
-func (p *ProcessManager) GetDeployedStartForm(by QueryProcessDefinitionBy) (htmlForm string, err error) {
-	res, err := p.client.Get("/process-definition/"+by.String()+"/deployed-start-form", map[string]string{})
-	if err != nil {
-		return
-	}
-
-	defer res.Body.Close()
-	rawData, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return
-	}
-
-	return string(rawData), nil
-}
-
-// RestartProcessInstance restarts process instances that were canceled or terminated synchronously.
-// To execute the restart asynchronously, use the Restart Process Instance Async method
-// For more information about the difference between synchronous and asynchronous execution,
-// please refer to the related section of the user guide
-func (p *ProcessManager) RestartProcessInstance(id string, req ReqRestartInstance) error {
-	_, err := p.client.post("/process-definition/"+id+"/restart", map[string]string{}, &req)
-	return err
-}
-
-// RestartProcessInstanceAsync restarts process instances that were canceled or terminated asynchronously.
-// To execute the restart synchronously, use the Restart Process Instance method
-// For more information about the difference between synchronous and asynchronous execution,
-// please refer to the related section of the user guide
-func (p *ProcessManager) RestartProcessInstanceAsync(id string, req ReqRestartInstance) (resp *ResBatch, err error) {
-	resp = &ResBatch{}
-	res, err := p.client.post("/process-definition/"+id+"/restart-async", map[string]string{}, &req)
-	if err != nil {
-		return
-	}
-
-	err = p.client.Marshal(res, resp)
-	return
 }

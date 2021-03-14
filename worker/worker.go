@@ -19,22 +19,22 @@ type Worker struct {
 
 // Options options for Worker
 type Options struct {
-	// workerId for all request (default: `worker-{random_int}`)
-	WorkerID string
-	// lock duration for all external task
+	// WorkerID for all request (default: `worker-{random_int}`)
+	WorkerID string `json:"workerId"`
+	// LockDuration lock duration for all external task
 	LockDuration time.Duration
-	// maximum tasks to receive for 1 request to camunda
+	// MaxTasks maximum tasks to receive for 1 request to camunda
 	MaxTasks int
-	// maximum running parallel task per handler
+	// MaxParallelTaskPerHandler maximum running parallel task per handler
 	MaxParallelTaskPerHandler int
-	// use priority
+	// UsePriority use priority
 	UsePriority *bool
-	// long polling timeout
+	// LongPollingTimeout long polling timeout
 	LongPollingTimeout time.Duration
 }
 
-// NewWorker a create new instance Worker
-func NewWorker(client *camunda.Client, options *Options, logger func(err error)) *Worker {
+// New a create new instance Worker
+func New(client *camunda.Client, options *Options, logger func(err error)) *Worker {
 	if options.WorkerID == "" {
 		rand.Seed(time.Now().UnixNano())
 		options.WorkerID = fmt.Sprintf("worker-%d", rand.Int())
@@ -58,7 +58,8 @@ type Context struct {
 
 // Complete a mark external task is complete
 func (c *Context) Complete(query CompleteRequest) error {
-	return c.client.ExternalTask.Complete(c.Task.Id, camunda.QueryComplete{
+	tm := c.client.TaskManager()
+	return tm.Complete(c.Task.ID, camunda.QueryComplete{
 		WorkerID:       &c.Task.WorkerID,
 		Variables:      query.Variables,
 		LocalVariables: query.LocalVariables,
@@ -67,7 +68,7 @@ func (c *Context) Complete(query CompleteRequest) error {
 
 // HandleBPMNError handle external task BPMN error
 func (c *Context) HandleBPMNError(query QueryHandleBPMNError) error {
-	return c.client.ExternalTask.HandleBPMNError(c.Task.Id, camunda.QueryHandleBPMNError{
+	return c.client.TaskManager().HandleBPMNError(c.Task.ID, camunda.QueryHandleBPMNError{
 		WorkerID:     &c.Task.WorkerID,
 		ErrorCode:    query.ErrorCode,
 		ErrorMessage: query.ErrorMessage,
@@ -77,7 +78,7 @@ func (c *Context) HandleBPMNError(query QueryHandleBPMNError) error {
 
 // HandleFailure handle external task failure
 func (c *Context) HandleFailure(query QueryHandleFailure) error {
-	return c.client.ExternalTask.HandleFailure(c.Task.Id, camunda.QueryHandleFailure{
+	return c.client.TaskManager().HandleFailure(c.Task.ID, camunda.QueryHandleFailure{
 		WorkerID:     &c.Task.WorkerID,
 		ErrorMessage: query.ErrorMessage,
 		ErrorDetails: query.ErrorDetails,
@@ -126,7 +127,7 @@ func (p *Worker) startPuller(query camunda.QueryFetchAndLock, handler Handler) {
 
 	retries := 0
 	for {
-		tasks, err := p.client.ExternalTask.FetchAndLock(query)
+		tasks, err := p.client.TaskManager().FetchAndLock(query)
 		if err != nil {
 			if retries < 60 {
 				retries++

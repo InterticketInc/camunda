@@ -37,7 +37,7 @@ type Client struct {
 	apiUser     string
 	apiPassword string
 
-	// ExternalTask      *ExternalTask
+	// TaskManager      *TaskManager
 	// Deployment        *Deployment
 	// ProcessDefinition *ProcessDefinition
 	// UserTask          *userTaskApi
@@ -114,6 +114,18 @@ func NewClient(options *ClientOptions) *Client {
 
 func (c *Client) DeployManager() *DeployManager {
 	return &DeployManager{
+		client: c,
+	}
+}
+
+func (c *Client) TaskManager() *TaskManager {
+	return &TaskManager{
+		client: c,
+	}
+}
+
+func (c *Client) ProcessManager() *ProcessManager {
+	return &ProcessManager{
 		client: c,
 	}
 }

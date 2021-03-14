@@ -30,7 +30,7 @@ type ResDeploymentCreate struct {
 	Links []ResLink `json:"links"`
 	// A JSON Object containing a property for each of the process definitions,
 	// which are successfully deployed with that deployment
-	DeployedProcessDefinitions map[string]ResProcessDefinition `json:"deployedProcessDefinitions"`
+	DeployedProcessDefinitions map[string]ProcessDefinitionResponse `json:"deployedProcessDefinitions"`
 	// A JSON Object containing a property for each of the case definitions,
 	// which are successfully deployed with that deployment
 	DeployedCaseDefinitions map[string]ResCaseDefinition `json:"deployedCaseDefinitions"`
