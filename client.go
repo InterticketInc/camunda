@@ -3,11 +3,15 @@ package camunda
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/google/go-querystring/query"
+	"github.com/rs/zerolog/log"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -112,12 +116,6 @@ func NewClient(options *ClientOptions) *Client {
 	return client
 }
 
-func (c *Client) DeployManager() *DeployManager {
-	return &DeployManager{
-		client: c,
-	}
-}
-
 func (c *Client) TaskManager() *TaskManager {
 	return &TaskManager{
 		client: c,
@@ -137,18 +135,29 @@ func (c *Client) SetCustomTransport(customHTTPTransport http.RoundTripper) {
 	}
 }
 
-func (c *Client) post(path string, query map[string]string, v interface{}) (res *http.Response, err error) {
+func (c *Client) Post(path string, query map[string]string, v interface{}, contentType ...string) (res *http.Response, err error) {
 	body := new(bytes.Buffer)
-	if err := json.NewEncoder(body).Encode(v); err != nil {
-		return nil, err
+
+	ct := "application/json"
+	if len(contentType) > 0 {
+		ct = contentType[0]
 	}
 
-	res, err = c.do(http.MethodPost, path, query, body, "application/json")
-	if err != nil {
-		return nil, err
-	}
+	if r, ok := v.(io.Reader); ok {
+		res, err = c.do(http.MethodPost, path, query, r, ct)
+		return res, nil
 
-	return res, nil
+	} else {
+		if err := json.NewEncoder(body).Encode(v); err != nil {
+			return nil, err
+		}
+		res, err = c.do(http.MethodPost, path, query, body, ct)
+		if err != nil {
+			return nil, err
+		}
+
+		return res, nil
+	}
 }
 
 func (c *Client) doPutJSON(path string, query map[string]string, v interface{}) error {
@@ -161,7 +170,7 @@ func (c *Client) doPutJSON(path string, query map[string]string, v interface{}) 
 	return err
 }
 
-func (c *Client) delete(path string, query map[string]string) (res *http.Response, err error) {
+func (c *Client) Delete(path string, query interface{}) (res *http.Response, err error) {
 	return c.do(http.MethodDelete, path, query, nil, "")
 }
 
@@ -173,13 +182,14 @@ func (c *Client) doPut(path string, query map[string]string) (res *http.Response
 	return c.do(http.MethodPut, path, query, nil, "")
 }
 
-func (c *Client) do(method, path string, query map[string]string, body io.Reader, contentType string) (res *http.Response, err error) {
-	url, err := c.buildURL(path, query)
+func (c *Client) do(method, path string, q interface{}, body io.Reader, contentType string) (res *http.Response, err error) {
+	u, err := c.buildURL(path, q)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest(method, url, body)
+	req, err := http.NewRequest(method, u, body)
+
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +211,7 @@ func (c *Client) do(method, path string, query map[string]string, body io.Reader
 	return
 }
 
-func (c *Client) Get(path string, query map[string]string) (res *http.Response, err error) {
+func (c *Client) Get(path string, query interface{}) (res *http.Response, err error) {
 	return c.do(http.MethodGet, path, query, nil, "")
 }
 
@@ -244,20 +254,49 @@ func (c *Client) Marshal(res *http.Response, v interface{}) error {
 	return nil
 }
 
-func (c *Client) buildURL(path string, query map[string]string) (string, error) {
-	if len(query) == 0 {
-		return c.endpointURL + path, nil
+func (c *Client) buildURL(path string, q interface{}) (string, error) {
+	// TODO: full refactor to use hard typed interfaces
+	if reflect.ValueOf(q).Kind() == reflect.Map {
+		log.Warn().Stack().Msg("Deprecated map query usage. Use struct with query tags instead!")
+
+		m, ok := q.(map[string]string)
+		if !ok {
+			return "", errors.New("cannot convert query to map[string]string")
+		}
+
+		if len(m) == 0 {
+			return c.endpointURL + path, nil
+		}
+
+		u, err := url.Parse(c.endpointURL + path)
+		if err != nil {
+			return "", err
+		}
+		q := u.Query()
+
+		for k, v := range m {
+			q.Set(k, v)
+		}
+
+		u.RawQuery = q.Encode()
+
+		return u.String(), nil
 	}
-	url, err := url.Parse(c.endpointURL + path)
+
+	// Mapping the interface with google's query tool into raw query string
+	v, err := query.Values(q)
 	if err != nil {
 		return "", err
 	}
 
-	q := url.Query()
-	for k, v := range query {
-		q.Set(k, v)
+	u, err := url.Parse(c.endpointURL + path)
+	if err != nil {
+		return "", err
 	}
 
-	url.RawQuery = q.Encode()
-	return url.String(), nil
+	u.RawQuery = v.Encode()
+
+	log.Debug().Str("url", u.String()).Msg("URL built")
+
+	return u.String(), nil
 }

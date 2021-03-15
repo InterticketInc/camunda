@@ -1,5 +1,7 @@
 package camunda
 
+import "fmt"
+
 // ProcessDefinitionResponse a JSON object corresponding to the ProcessDefinition interface in the engine
 type ProcessDefinitionResponse struct {
 	// The id of the process definition
@@ -71,9 +73,9 @@ type ResActivityInstanceStatisticsIncident struct {
 
 // QueryProcessDefinitionBy path builder
 type QueryProcessDefinitionBy struct {
-	Id       *string
-	Key      *string
-	TenantId *string
+	Id       string
+	Key      string
+	TenantId string
 }
 
 // ResGetStartFormKey a response from GetStartFormKey method
@@ -93,15 +95,15 @@ type ResBPMNProcessDefinition struct {
 	Bpmn20Xml string `json:"bpmn20Xml"`
 }
 
-// String a build path part
-func (q *QueryProcessDefinitionBy) String() string {
-	if q.Key != nil && q.TenantId != nil {
-		return "key/" + *q.Key + "/tenant-id/" + *q.TenantId
-	} else if q.Key != nil {
-		return "key/" + *q.Key
+// Path a build path part
+func (q *QueryProcessDefinitionBy) Path() string {
+	if q.Key != "" && q.TenantId != "" {
+		return fmt.Sprintf("key/%s/tenant-id/%s", q.Key, q.TenantId)
+	} else if q.Key != "" {
+		return fmt.Sprintf("key/%s", q.Key)
 	}
 
-	return *q.Id
+	return q.Id
 }
 
 // ResStartedProcessDefinition ProcessDefinition for started

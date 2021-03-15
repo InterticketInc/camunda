@@ -1,3 +1,5 @@
+CAMUNDA_VERSION=7.14.0
+
 golang:
 	@echo "--> Go Version"
 	@go version
@@ -14,3 +16,10 @@ changelog:
 
 docker-lint:
 	docker run --rm -v $(pwd):/app -w /app golangci/golangci-lint:v1.27.0 golangci-lint run -v
+
+update-openapi:
+	curl -O https://app.camunda.com/nexus/repository/camunda-bpm/org/camunda/bpm/camunda-engine-rest-openapi/${CAMUNDA_VERSION}/camunda-engine-rest-openapi-${CAMUNDA_VERSION}.jar
+	mv camunda-engine-rest-openapi-${CAMUNDA_VERSION}.jar camunda.zip
+	mkdir -p camunda
+	unzip camunda.zip openapi.json -d camunda
+	rm camunda.zip

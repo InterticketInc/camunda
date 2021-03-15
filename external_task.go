@@ -131,7 +131,7 @@ type ResLockedExternalTask struct {
 	// The business key of the process instance the external task belongs to
 	BusinessKey string `json:"businessKey"`
 	// A JSON object containing a property for each of the requested variables
-	Variables map[string]Variable `json:"variables"`
+	Variables map[string]*Variable `json:"variables"`
 }
 
 // Variable a variable

@@ -369,7 +369,7 @@ func (t *userTaskApi) GetList(query *UserTaskGetListQuery) ([]UserTask, error) {
 		queryParams["firstResult"] = fmt.Sprintf("%d", query.FirstResult)
 	}
 
-	res, err := t.client.post("/task", queryParams, query)
+	res, err := t.client.Post("/task", queryParams, query)
 	if err != nil {
 		return nil, err
 	}
@@ -394,7 +394,7 @@ func (t *userTaskApi) GetListCount(query *UserTaskGetListQuery) (int64, error) {
 
 	queryParams := map[string]string{}
 
-	res, err := t.client.post("/task/count", queryParams, query)
+	res, err := t.client.Post("/task/count", queryParams, query)
 	if err != nil {
 		return 0, err
 	}
@@ -412,9 +412,9 @@ func (t *userTaskApi) GetListCount(query *UserTaskGetListQuery) (int64, error) {
 
 // Complete complete user task by id
 func (t *userTaskApi) Complete(id string, query QueryUserTaskComplete) error {
-	_, err := t.client.post("/task/"+id+"/complete", map[string]string{}, query)
+	_, err := t.client.Post("/task/"+id+"/complete", map[string]string{}, query)
 	if err != nil {
-		return fmt.Errorf("can't post json: %w", err)
+		return fmt.Errorf("can't Post json: %w", err)
 	}
 
 	return nil
