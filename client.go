@@ -3,11 +3,15 @@ package camunda
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/google/go-querystring/query"
+	"github.com/rs/zerolog/log"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -32,15 +36,15 @@ type ClientOptions struct {
 // Client a client for Camunda API
 type Client struct {
 	httpClient  *http.Client
-	endpointUrl string
+	endpointURL string
 	userAgent   string
 	apiUser     string
 	apiPassword string
 
-	ExternalTask      *ExternalTask
-	Deployment        *Deployment
-	ProcessDefinition *ProcessDefinition
-	UserTask          *userTaskApi
+	// TaskManager      *TaskManager
+	// Deployment        *Deployment
+	// ProcessDefinition *ProcessDefinition
+	// UserTask          *userTaskApi
 }
 
 var ErrorNotFound = &Error{
@@ -91,14 +95,14 @@ func NewClient(options *ClientOptions) *Client {
 		httpClient: &http.Client{
 			Timeout: time.Second * DefaultTimeoutSec,
 		},
-		endpointUrl: DefaultEndpointUrl,
+		endpointURL: DefaultEndpointUrl,
 		userAgent:   DefaultUserAgent,
 		apiUser:     options.ApiUser,
 		apiPassword: options.ApiPassword,
 	}
 
 	if options.EndpointUrl != "" {
-		client.endpointUrl = options.EndpointUrl
+		client.endpointURL = options.EndpointUrl
 	}
 
 	if options.UserAgent != "" {
@@ -109,12 +113,19 @@ func NewClient(options *ClientOptions) *Client {
 		client.httpClient.Timeout = options.Timeout
 	}
 
-	client.ExternalTask = &ExternalTask{client: client}
-	client.Deployment = &Deployment{client: client}
-	client.ProcessDefinition = &ProcessDefinition{client: client}
-	client.UserTask = &userTaskApi{client: client}
-
 	return client
+}
+
+func (c *Client) TaskManager() *TaskManager {
+	return &TaskManager{
+		client: c,
+	}
+}
+
+func (c *Client) ProcessManager() *ProcessManager {
+	return &ProcessManager{
+		client: c,
+	}
 }
 
 // SetCustomTransport set new custom transport
@@ -124,18 +135,27 @@ func (c *Client) SetCustomTransport(customHTTPTransport http.RoundTripper) {
 	}
 }
 
-func (c *Client) post(path string, query map[string]string, v interface{}) (res *http.Response, err error) {
+func (c *Client) Post(path string, query map[string]string, v interface{}, contentType ...string) (res *http.Response, err error) {
 	body := new(bytes.Buffer)
-	if err := json.NewEncoder(body).Encode(v); err != nil {
-		return nil, err
+
+	ct := "application/json"
+	if len(contentType) > 0 {
+		ct = contentType[0]
 	}
 
-	res, err = c.do(http.MethodPost, path, query, body, "application/json")
-	if err != nil {
-		return nil, err
-	}
+	if r, ok := v.(io.Reader); ok {
+		return c.do(http.MethodPost, path, query, r, ct)
+	} else {
+		if err := json.NewEncoder(body).Encode(v); err != nil {
+			return nil, err
+		}
+		res, err = c.do(http.MethodPost, path, query, body, ct)
+		if err != nil {
+			return nil, err
+		}
 
-	return res, nil
+		return res, nil
+	}
 }
 
 func (c *Client) doPutJSON(path string, query map[string]string, v interface{}) error {
@@ -148,7 +168,7 @@ func (c *Client) doPutJSON(path string, query map[string]string, v interface{}) 
 	return err
 }
 
-func (c *Client) delete(path string, query map[string]string) (res *http.Response, err error) {
+func (c *Client) Delete(path string, query interface{}) (res *http.Response, err error) {
 	return c.do(http.MethodDelete, path, query, nil, "")
 }
 
@@ -160,13 +180,14 @@ func (c *Client) doPut(path string, query map[string]string) (res *http.Response
 	return c.do(http.MethodPut, path, query, nil, "")
 }
 
-func (c *Client) do(method, path string, query map[string]string, body io.Reader, contentType string) (res *http.Response, err error) {
-	url, err := c.buildURL(path, query)
+func (c *Client) do(method, path string, q interface{}, body io.Reader, contentType string) (res *http.Response, err error) {
+	u, err := c.buildURL(path, q)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest(method, url, body)
+	req, err := http.NewRequest(method, u, body)
+
 	if err != nil {
 		return nil, err
 	}
@@ -181,14 +202,15 @@ func (c *Client) do(method, path string, query map[string]string, body io.Reader
 	if err != nil {
 		return nil, err
 	}
-	if err := c.checkResponse(res); err != nil {
+
+	if err = c.checkResponse(res); err != nil {
 		return nil, err
 	}
 
 	return
 }
 
-func (c *Client) Get(path string, query map[string]string) (res *http.Response, err error) {
+func (c *Client) Get(path string, query interface{}) (res *http.Response, err error) {
 	return c.do(http.MethodGet, path, query, nil, "")
 }
 
@@ -231,25 +253,49 @@ func (c *Client) Marshal(res *http.Response, v interface{}) error {
 	return nil
 }
 
-// Publishes a new deployment
-func Deploy() error {
-	panic("implement")
-}
+func (c *Client) buildURL(path string, q interface{}) (string, error) {
+	// TODO: full refactor to use hard typed interfaces
+	if reflect.ValueOf(q).Kind() == reflect.Map {
+		log.Warn().Stack().Msg("Deprecated map query usage. Use struct with query tags instead!")
 
-func (c *Client) buildURL(path string, query map[string]string) (string, error) {
-	if len(query) == 0 {
-		return c.endpointUrl + path, nil
+		m, ok := q.(map[string]string)
+		if !ok {
+			return "", errors.New("cannot convert query to map[string]string")
+		}
+
+		if len(m) == 0 {
+			return c.endpointURL + path, nil
+		}
+
+		u, err := url.Parse(c.endpointURL + path)
+		if err != nil {
+			return "", err
+		}
+		q := u.Query()
+
+		for k, v := range m {
+			q.Set(k, v)
+		}
+
+		u.RawQuery = q.Encode()
+
+		return u.String(), nil
 	}
-	url, err := url.Parse(c.endpointUrl + path)
+
+	// Mapping the interface with google's query tool into raw query string
+	v, err := query.Values(q)
 	if err != nil {
 		return "", err
 	}
 
-	q := url.Query()
-	for k, v := range query {
-		q.Set(k, v)
+	u, err := url.Parse(c.endpointURL + path)
+	if err != nil {
+		return "", err
 	}
 
-	url.RawQuery = q.Encode()
-	return url.String(), nil
+	u.RawQuery = v.Encode()
+
+	log.Debug().Str("url", u.String()).Msg("URL built")
+
+	return u.String(), nil
 }

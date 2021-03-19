@@ -1,15 +1,6 @@
 package camunda
 
-import (
-	"fmt"
-)
-
-// ExternalTask a client for ExternalTask API
-type ExternalTask struct {
-	client *Client
-}
-
-// ResExternalTask a ExternalTask response
+// ResExternalTask a TaskManager response
 type ResExternalTask struct {
 	TaskBase
 	// The business key of the process instance the external task belongs to
@@ -22,19 +13,19 @@ type QueryGetListPost struct {
 	ExternalTaskID *string `json:"externalTaskId,omitempty"`
 	// Filter by an external task topic
 	TopicName *string `json:"topicName,omitempty"`
-	// Filter by the id of the worker that the task was most recently locked by
-	WorkerID *string `json:"workerId,omitempty"`
-	// Only include external tasks that are currently locked (i.e., they have a lock time and it has not expired).
+	// Filter by the id of the worker that the task was most recently Locked by
+	WorkerID *string `json:"workerID,omitempty"`
+	// Only include external tasks that are currently Locked (i.e., they have a lock time and it has not expired).
 	// Value may only be true, as false matches any external task
-	Locked *bool `json:"locked,omitempty"`
-	// Only include external tasks that are currently not locked (i.e., they have no lock or it has expired).
+	Locked *bool `json:"Locked,omitempty"`
+	// Only include external tasks that are currently not Locked (i.e., they have no lock or it has expired).
 	// Value may only be true, as false matches any external task
-	NotLocked *bool `json:"notLocked,omitempty"`
+	NotLocked *bool `json:"NotLocked,omitempty"`
 	// Only include external tasks that have a positive (> 0) number of retries (or null). Value may only be true,
 	// as false matches any external task
-	WithRetriesLeft *bool `json:"withRetriesLeft,omitempty"`
+	WithRetriesLeft *bool `json:"WithRetriesLeft,omitempty"`
 	// Only include external tasks that have 0 retries. Value may only be true, as false matches any external task
-	NoRetriesLeft *bool `json:"noRetriesLeft,omitempty"`
+	NoRetriesLeft *bool `json:"NoRetriesLeft,omitempty"`
 	// Restrict to external tasks that have a lock that expires after a given date. By default*,
 	// the date must have the format yyyy-MM-dd'T'HH:mm:ss.SSSZ, e.g., 2013-01-23T14:42:45.000+0200
 	LockExpirationAfter *Time `json:"lockExpirationAfter,omitempty"`
@@ -69,7 +60,7 @@ type QueryGetListPost struct {
 
 // QueryFetchAndLock query for FetchAndLock request
 type QueryFetchAndLock struct {
-	// Mandatory. The id of the worker on which behalf tasks are fetched. The returned tasks are locked
+	// Mandatory. The id of the worker on which behalf tasks are fetched. The returned tasks are Locked
 	// for that worker and can only be completed when providing the same worker id
 	WorkerID string `json:"workerId"`
 	// Mandatory. The maximum number of tasks to return
@@ -81,7 +72,7 @@ type QueryFetchAndLock struct {
 	AsyncResponseTimeout *int `json:"asyncResponseTimeout,omitempty"`
 	// A JSON array of topic objects for which external tasks should be fetched.
 	// The returned tasks may be arbitrarily distributed among these topics
-	Topics *[]QueryFetchAndLockTopic `json:"topics,omitempty"`
+	Topics []*QueryFetchAndLockTopic `json:"topics,omitempty"`
 }
 
 // QueryFetchAndLockTopic a JSON array of topic objects for which external tasks should be fetched
@@ -93,7 +84,7 @@ type QueryFetchAndLockTopic struct {
 	// A JSON array of String values that represent variable names. For each result task belonging to this topic,
 	// the given variables are returned as well if they are accessible from the external task's execution.
 	// If not provided - all variables will be fetched
-	Variables *[]string `json:"variables,omitempty"`
+	Variables []*string `json:"variables,omitempty"`
 	// If true only local variables will be fetched
 	LocalVariables *bool `json:"localVariables,omitempty"`
 	// A String value which enables the filtering of tasks based on process instance business key
@@ -113,7 +104,7 @@ type QueryFetchAndLockTopic struct {
 	// A JSON object used for filtering tasks based on process instance variable values.
 	// A property name of the object represents a process variable name, while the property value
 	// represents the process variable value to filter tasks by
-	ProcessVariables map[string]Variable `json:"processVariables,omitempty"`
+	ProcessVariables map[string]*Variable `json:"processVariables,omitempty"`
 	// Determines whether serializable variable values (typically variables that store custom Java objects)
 	// should be deserialized on server side (default false).
 	// If set to true, a serializable variable will be deserialized on server side and transformed to JSON
@@ -136,7 +127,7 @@ type QueryListPostSorting struct {
 // ResLockedExternalTask a response FetchAndLock method.
 type ResLockedExternalTask struct {
 	// TaskBase
-	TaskBase
+	*TaskBase
 	// The business key of the process instance the external task belongs to
 	BusinessKey string `json:"businessKey"`
 	// A JSON object containing a property for each of the requested variables
@@ -150,7 +141,7 @@ type Variable struct {
 	// The value type of the variable.
 	Type string `json:"type"`
 	// A JSON object containing additional, value-type-dependent properties
-	ValueInfo ValueInfo `json:"valueInfo"`
+	ValueInfo *ValueInfo `json:"valueInfo,omitempty"`
 }
 
 // VariableSet a variable for set
@@ -177,7 +168,7 @@ type ValueInfo struct {
 // QueryComplete a query for Complete request
 type QueryComplete struct {
 	// The id of the worker that completes the task.
-	// Must match the id of the worker who has most recently locked the task
+	// Must match the id of the worker who has most recently Locked the task
 	WorkerID *string `json:"workerId,omitempty"`
 	// A JSON object containing variable key-value pairs
 	Variables map[string]*Variable `json:"variables"`
@@ -189,7 +180,7 @@ type QueryComplete struct {
 // QueryHandleBPMNError a query for HandleBPMNError request
 type QueryHandleBPMNError struct {
 	// The id of the worker that reports the failure.
-	// Must match the id of the worker who has most recently locked the task
+	// Must match the id of the worker who has most recently Locked the task
 	WorkerID *string `json:"workerId,omitempty"`
 	// An error code that indicates the predefined error. Is used to identify the BPMN error handler
 	ErrorCode *string `json:"errorCode,omitempty"`
@@ -203,7 +194,7 @@ type QueryHandleBPMNError struct {
 // QueryHandleFailure a query for HandleFailure request
 type QueryHandleFailure struct {
 	// The id of the worker that reports the failure.
-	// Must match the id of the worker who has most recently locked the task
+	// Must match the id of the worker who has most recently Locked the task
 	WorkerID *string `json:"workerId,omitempty"`
 	// An message indicating the reason of the failure
 	ErrorMessage *string `json:"errorMessage,omitempty"`
@@ -282,191 +273,4 @@ type QuerySetRetriesSync struct {
 	ProcessInstanceQuery *string `json:"processInstanceQuery,omitempty"`
 	// Query for the historic process instances containing the tasks to set the number of retries for
 	HistoricProcessInstanceQuery *string `json:"historicProcessInstanceQuery,omitempty"`
-}
-
-// Get retrieves an external task by id, corresponding to the ExternalTask interface in the engine
-func (e *ExternalTask) Get(id string) (*ResExternalTask, error) {
-	resp := &ResExternalTask{}
-	res, err := e.client.Get(
-		"/external-task/"+id,
-		map[string]string{},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := e.client.Marshal(res, resp); err != nil {
-		return nil, err
-	}
-
-	return resp, nil
-}
-
-// GetList queries for the external tasks that fulfill given parameters.
-// Parameters may be static as well as dynamic runtime properties of executions
-// Query parameters described in the documentation:
-// https://docs.camunda.org/manual/latest/reference/rest/external-task/get-query/#query-parameters
-func (e *ExternalTask) GetList(query map[string]string) ([]*ResExternalTask, error) {
-	resp := []*ResExternalTask{}
-	res, err := e.client.Get(
-		"/external-task",
-		query,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := e.client.Marshal(res, &resp); err != nil {
-		return nil, err
-	}
-
-	return resp, nil
-}
-
-// GetListCount queries for the number of external tasks that fulfill given parameters.
-// Takes the same parameters as the Get External Tasks method.
-// Query parameters described in the documentation:
-// https://docs.camunda.org/manual/latest/reference/rest/external-task/get-query-count/#query-parameters
-func (e *ExternalTask) GetListCount(query map[string]string) (int, error) {
-	resCount := ResponseCount{}
-	res, err := e.client.Get("/external-task/count", query)
-	if err != nil {
-		return 0, err
-	}
-
-	err = e.client.Marshal(res, &resCount)
-	return resCount.Count, err
-}
-
-// GetListPost queries for external tasks that fulfill given parameters in the form of a JSON object.
-// This method is slightly more powerful than the Get External Tasks method
-// because it allows to specify a hierarchical result sorting.
-func (e *ExternalTask) GetListPost(query QueryGetListPost, firstResult, maxResults int) ([]*ResExternalTask, error) {
-	resp := []*ResExternalTask{}
-	res, err := e.client.post(
-		"/external-task",
-		map[string]string{},
-		&query,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := e.client.Marshal(res, &resp); err != nil {
-		return nil, err
-	}
-
-	return resp, nil
-}
-
-// GetListPostCount queries for the number of external tasks that fulfill given parameters.
-// This method takes the same message body as the Get External Tasks (POST) method
-func (e *ExternalTask) GetListPostCount(query QueryGetListPost) (int, error) {
-	resCount := ResponseCount{}
-	res, err := e.client.post(
-		"/external-task/count",
-		map[string]string{},
-		query,
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	err = e.client.Marshal(res, resCount)
-	return resCount.Count, err
-}
-
-// FetchAndLock fetches and locks a specific number of external tasks for execution by a worker.
-// Query can be restricted to specific task topics and for each task topic an individual lock time can be provided
-func (e *ExternalTask) FetchAndLock(query QueryFetchAndLock) ([]*ResLockedExternalTask, error) {
-	var resp []*ResLockedExternalTask
-	res, err := e.client.post(
-		"/external-task/fetchAndLock",
-		map[string]string{},
-		&query,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("request error: %w", err)
-	}
-
-	if err := e.client.Marshal(res, &resp); err != nil {
-		return nil, err
-	}
-
-	return resp, nil
-}
-
-// Complete a completes an external task by id and updates process variables
-func (e *ExternalTask) Complete(id string, query QueryComplete) error {
-	_, err := e.client.post("/external-task/"+id+"/complete", map[string]string{}, &query)
-	return err
-}
-
-// HandleBPMNError reports a business error in the context of a running external task by id.
-// The error code must be specified to identify the BPMN error handler
-func (e *ExternalTask) HandleBPMNError(id string, query QueryHandleBPMNError) error {
-	_, err := e.client.post("/external-task/"+id+"/bpmnError", map[string]string{}, &query)
-	return err
-}
-
-// HandleFailure reports a failure to execute an external task by id.
-// A number of retries and a timeout until the task can be retried can be specified.
-// If retries are set to 0, an incident for this task is created
-func (e *ExternalTask) HandleFailure(id string, query QueryHandleFailure) error {
-	_, err := e.client.post("/external-task/"+id+"/failure", map[string]string{}, &query)
-	return err
-}
-
-// Unlock a unlocks an external task by id. Clears the task’s lock expiration time and worker id
-func (e *ExternalTask) Unlock(id string) error {
-	_, err := e.client.doPost("/external-task/"+id+"/unlock", map[string]string{})
-	return err
-}
-
-// ExtendLock a extends the timeout of the lock by a given amount of time
-func (e *ExternalTask) ExtendLock(id string, query QueryExtendLock) error {
-	_, err := e.client.post("/external-task/"+id+"/extendLock", map[string]string{}, &query)
-	return err
-}
-
-// SetPriority a sets the priority of an existing external task by id. The default value of a priority is 0
-func (e *ExternalTask) SetPriority(id string, priority int) error {
-	_, err := e.client.doPut("/external-task/"+id+"/priority", map[string]string{})
-	return err
-}
-
-// SetRetries a sets the number of retries left to execute an external task by id. If retries are set to 0,
-// an incident is created
-func (e *ExternalTask) SetRetries(id string, retries int) error {
-	return e.client.doPutJSON("/external-task/"+id+"/retries", map[string]string{}, map[string]int{
-		"retries": retries,
-	})
-}
-
-// SetRetriesAsync a set Retries For Multiple External Tasks Async (Batch).
-// Sets the number of retries left to execute external tasks by id asynchronously.
-// If retries are set to 0, an incident is created
-func (e *ExternalTask) SetRetriesAsync(id string, query QuerySetRetriesAsync) (*ResBatch, error) {
-	resp := ResBatch{}
-	res, err := e.client.post(
-		"/external-task/retries-async",
-		map[string]string{},
-		&query,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := e.client.Marshal(res, &resp); err != nil {
-		return nil, err
-	}
-
-	return &resp, nil
-}
-
-// SetRetriesSync a set Retries For Multiple External Tasks Sync.
-// Sets the number of retries left to execute external tasks by id synchronously.
-// If retries are set to 0, an incident is created
-func (e *ExternalTask) SetRetriesSync(id string, query QuerySetRetriesSync) error {
-	return e.client.doPutJSON("/external-task/retries", map[string]string{}, &query)
 }
