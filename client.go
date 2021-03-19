@@ -145,7 +145,6 @@ func (c *Client) Post(path string, query map[string]string, v interface{}, conte
 
 	if r, ok := v.(io.Reader); ok {
 		return c.do(http.MethodPost, path, query, r, ct)
-
 	} else {
 		if err := json.NewEncoder(body).Encode(v); err != nil {
 			return nil, err
