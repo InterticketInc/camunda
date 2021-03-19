@@ -72,7 +72,7 @@ type QueryFetchAndLock struct {
 	AsyncResponseTimeout *int `json:"asyncResponseTimeout,omitempty"`
 	// A JSON array of topic objects for which external tasks should be fetched.
 	// The returned tasks may be arbitrarily distributed among these topics
-	Topics *[]QueryFetchAndLockTopic `json:"topics,omitempty"`
+	Topics []*QueryFetchAndLockTopic `json:"topics,omitempty"`
 }
 
 // QueryFetchAndLockTopic a JSON array of topic objects for which external tasks should be fetched
@@ -84,7 +84,7 @@ type QueryFetchAndLockTopic struct {
 	// A JSON array of String values that represent variable names. For each result task belonging to this topic,
 	// the given variables are returned as well if they are accessible from the external task's execution.
 	// If not provided - all variables will be fetched
-	Variables *[]string `json:"variables,omitempty"`
+	Variables []*string `json:"variables,omitempty"`
 	// If true only local variables will be fetched
 	LocalVariables *bool `json:"localVariables,omitempty"`
 	// A String value which enables the filtering of tasks based on process instance business key
@@ -104,7 +104,7 @@ type QueryFetchAndLockTopic struct {
 	// A JSON object used for filtering tasks based on process instance variable values.
 	// A property name of the object represents a process variable name, while the property value
 	// represents the process variable value to filter tasks by
-	ProcessVariables map[string]Variable `json:"processVariables,omitempty"`
+	ProcessVariables map[string]*Variable `json:"processVariables,omitempty"`
 	// Determines whether serializable variable values (typically variables that store custom Java objects)
 	// should be deserialized on server side (default false).
 	// If set to true, a serializable variable will be deserialized on server side and transformed to JSON
@@ -131,7 +131,7 @@ type ResLockedExternalTask struct {
 	// The business key of the process instance the external task belongs to
 	BusinessKey string `json:"businessKey"`
 	// A JSON object containing a property for each of the requested variables
-	Variables map[string]*Variable `json:"variables"`
+	Variables map[string]Variable `json:"variables"`
 }
 
 // Variable a variable
@@ -141,7 +141,7 @@ type Variable struct {
 	// The value type of the variable.
 	Type string `json:"type"`
 	// A JSON object containing additional, value-type-dependent properties
-	ValueInfo ValueInfo `json:"valueInfo"`
+	ValueInfo *ValueInfo `json:"valueInfo,omitempty"`
 }
 
 // VariableSet a variable for set

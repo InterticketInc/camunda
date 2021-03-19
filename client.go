@@ -144,8 +144,7 @@ func (c *Client) Post(path string, query map[string]string, v interface{}, conte
 	}
 
 	if r, ok := v.(io.Reader); ok {
-		res, err = c.do(http.MethodPost, path, query, r, ct)
-		return res, nil
+		return c.do(http.MethodPost, path, query, r, ct)
 
 	} else {
 		if err := json.NewEncoder(body).Encode(v); err != nil {
@@ -204,7 +203,8 @@ func (c *Client) do(method, path string, q interface{}, body io.Reader, contentT
 	if err != nil {
 		return nil, err
 	}
-	if err := c.checkResponse(res); err != nil {
+
+	if err = c.checkResponse(res); err != nil {
 		return nil, err
 	}
 
