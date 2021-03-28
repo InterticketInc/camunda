@@ -3,6 +3,7 @@ package camunda
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 )
 
 type MessageManager struct {
@@ -26,6 +27,11 @@ func (mm *MessageManager) SendMessage(request *MessageRequest) (*SendMessageResp
 		return nil, fmt.Errorf("cannot send message: %w", err)
 	}
 	defer res.Body.Close()
+
+	// No content
+	if res.StatusCode == http.StatusNoContent {
+		return nil, nil
+	}
 
 	var smr SendMessageResponse
 	err = json.NewDecoder(res.Body).Decode(&smr)
