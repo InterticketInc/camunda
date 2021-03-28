@@ -151,7 +151,7 @@ func (p *ProcessManager) Get(by QueryProcessDefinitionBy) (processDefinition *Pr
 // in the request body
 func (p *ProcessManager) StartInstance(by QueryProcessDefinitionBy, req StartInstanceRequest) (processDefinition *ResStartedProcessDefinition, err error) {
 	processDefinition = &ResStartedProcessDefinition{}
-	res, err := p.client.Post("/process-definition/"+by.Path()+"/start", map[string]string{}, &req)
+	res, err := p.client.Post("/process-definition/"+by.Path()+"/start", nil, &req)
 	if err != nil {
 		return
 	}

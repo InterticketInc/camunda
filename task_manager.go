@@ -68,7 +68,7 @@ func (e *TaskManager) GetListPost(query QueryGetListPost, firstResult, maxResult
 	resp := []*ResExternalTask{}
 	res, err := e.client.Post(
 		"/external-task",
-		map[string]string{},
+		nil,
 		&query,
 	)
 	if err != nil {
@@ -105,7 +105,7 @@ func (e *TaskManager) FetchAndLock(query QueryFetchAndLock) ([]*ResLockedExterna
 	var resp []*ResLockedExternalTask
 	res, err := e.client.Post(
 		"/external-task/fetchAndLock",
-		map[string]string{},
+		nil,
 		&query,
 	)
 	if err != nil {
@@ -121,14 +121,14 @@ func (e *TaskManager) FetchAndLock(query QueryFetchAndLock) ([]*ResLockedExterna
 
 // Complete a completes an external task by id and updates process variables
 func (e *TaskManager) Complete(id string, query QueryComplete) error {
-	_, err := e.client.Post("/external-task/"+id+"/complete", map[string]string{}, &query)
+	_, err := e.client.Post("/external-task/"+id+"/complete", nil, &query)
 	return err
 }
 
 // HandleBPMNError reports a business error in the context of a running external task by id.
 // The error code must be specified to identify the BPMN error handler
 func (e *TaskManager) HandleBPMNError(id string, query QueryHandleBPMNError) error {
-	_, err := e.client.Post("/external-task/"+id+"/bpmnError", map[string]string{}, &query)
+	_, err := e.client.Post("/external-task/"+id+"/bpmnError", nil, &query)
 	return err
 }
 
@@ -136,13 +136,13 @@ func (e *TaskManager) HandleBPMNError(id string, query QueryHandleBPMNError) err
 // A number of retries and a timeout until the task can be retried can be specified.
 // If retries are set to 0, an incident for this task is created
 func (e *TaskManager) HandleFailure(id string, query QueryHandleFailure) error {
-	_, err := e.client.Post("/external-task/"+id+"/failure", map[string]string{}, &query)
+	_, err := e.client.Post("/external-task/"+id+"/failure", nil, &query)
 	return err
 }
 
 // Unlock a unlocks an external task by id. Clears the task’s lock expiration time and worker id
 func (e *TaskManager) Unlock(id string) error {
-	_, err := e.client.doPost("/external-task/"+id+"/unlock", map[string]string{})
+	_, err := e.client.doPost("/external-task/"+id+"/unlock", nil)
 	return err
 }
 
