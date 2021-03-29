@@ -72,7 +72,7 @@ func (c *Context) Complete(query CompleteRequest) error {
 }
 
 // HandleBPMNError handle external task BPMN error
-func (c *Context) HandleBPMNError(query QueryHandleBPMNError) error {
+func (c *Context) HandleBPMNError(query camunda.QueryHandleBPMNError) error {
 	return c.client.TaskManager().HandleBPMNError(c.Task.ID, camunda.QueryHandleBPMNError{
 		WorkerID:     &c.Task.WorkerID,
 		ErrorCode:    query.ErrorCode,
@@ -82,9 +82,9 @@ func (c *Context) HandleBPMNError(query QueryHandleBPMNError) error {
 }
 
 // HandleFailure handle external task failure
-func (c *Context) HandleFailure(query QueryHandleFailure) error {
-	return c.client.TaskManager().HandleFailure(c.Task.ID, camunda.QueryHandleFailure{
-		WorkerID:     &c.Task.WorkerID,
+func (c *Context) HandleFailure(query TaskFailureRequest) error {
+	return c.client.TaskManager().TaskFailed(c.Task.ID, camunda.Failure{
+		WorkerID:     c.Task.WorkerID,
 		ErrorMessage: query.ErrorMessage,
 		ErrorDetails: query.ErrorDetails,
 		Retries:      query.Retries,
@@ -168,9 +168,9 @@ func (p *Worker) handle(ctx *Context, handler Handler) {
 		if r := recover(); r != nil {
 			errMessage := fmt.Sprintf("fatal error in task: %s", r)
 			errDetails := fmt.Sprintf("fatal error in task: %s\nStack trace: %s", r, string(debug.Stack()))
-			err := ctx.HandleFailure(QueryHandleFailure{
-				ErrorMessage: &errMessage,
-				ErrorDetails: &errDetails,
+			err := ctx.HandleFailure(TaskFailureRequest{
+				ErrorMessage: errMessage,
+				ErrorDetails: errDetails,
 			})
 			if err != nil {
 				p.log.Error().
@@ -185,12 +185,14 @@ func (p *Worker) handle(ctx *Context, handler Handler) {
 	err := handler(ctx)
 	if err != nil {
 		msg := fmt.Sprintf("task error: %s", err)
-		err = ctx.HandleFailure(QueryHandleFailure{
-			ErrorMessage: &msg,
+		err = ctx.HandleFailure(TaskFailureRequest{
+			ErrorMessage: msg,
 		})
 
 		if err != nil {
-			p.log.Error().Err(err).Msg("error send handle failure")
+			p.log.Error().
+				Err(err).
+				Msg("error send handle failure")
 		}
 
 		p.log.Error().Msg(msg)

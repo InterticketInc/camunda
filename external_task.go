@@ -191,15 +191,15 @@ type QueryHandleBPMNError struct {
 	Variables Variables `json:"variables"`
 }
 
-// QueryHandleFailure a query for HandleFailure request
-type QueryHandleFailure struct {
+// Failure a query for Failure request
+type Failure struct {
 	// The id of the worker that reports the failure.
 	// Must match the id of the worker who has most recently Locked the task
-	WorkerID *string `json:"workerId,omitempty"`
+	WorkerID string `json:"workerId,omitempty"`
 	// An message indicating the reason of the failure
-	ErrorMessage *string `json:"errorMessage,omitempty"`
+	ErrorMessage string `json:"errorMessage,omitempty"`
 	// A detailed error description
-	ErrorDetails *string `json:"errorDetails,omitempty"`
+	ErrorDetails string `json:"errorDetails,omitempty"`
 	// A number of how often the task should be retried.
 	// Must be >= 0. If this is 0, an incident is created and the task cannot be fetched anymore unless
 	// the retries are increased again. The incident's message is set to the errorMessage parameter

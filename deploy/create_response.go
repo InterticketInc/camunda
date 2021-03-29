@@ -21,7 +21,7 @@ type CreateResponse struct {
 	DeployedProcessDefinitions map[string]camunda.ProcessDefinitionResponse `json:"deployedProcessDefinitions"`
 	// A JSON Object containing a property for each of the case definitions,
 	// which are successfully deployed with that deployment
-	DeployedCaseDefinitions map[string]camunda.ResCaseDefinition `json:"deployedCaseDefinitions"`
+	DeployedCaseDefinitions map[string]camunda.CaseDefinition `json:"deployedCaseDefinitions"`
 	// A JSON Object containing a property for each of the decision definitions,
 	// which are successfully deployed with that deployment
 	DeployedDecisionDefinitions map[string]*camunda.DecisionDefinition `json:"deployedDecisionDefinitions"`

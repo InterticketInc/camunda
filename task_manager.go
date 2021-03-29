@@ -132,10 +132,10 @@ func (e *TaskManager) HandleBPMNError(id string, query QueryHandleBPMNError) err
 	return err
 }
 
-// HandleFailure reports a failure to execute an external task by id.
+// Failure reports a failure to execute an external task by id.
 // A number of retries and a timeout until the task can be retried can be specified.
 // If retries are set to 0, an incident for this task is created
-func (e *TaskManager) HandleFailure(id string, query QueryHandleFailure) error {
+func (e *TaskManager) TaskFailed(id string, query Failure) error {
 	_, err := e.client.Post("/external-task/"+id+"/failure", nil, &query)
 	return err
 }
