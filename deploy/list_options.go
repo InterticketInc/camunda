@@ -6,15 +6,15 @@ type ListOptions struct {
 	// Name Filter by the deployment name. Exact match.
 	Name string `url:"name,omitempty"`
 	// NameLike Filter by the deployment name that the parameter is a substring of. The
-	//parameter can include the wildcard % to express like-strategy such as: starts with (%name), ends with (name%) or contains (%name%).
+	// parameter can include the wildcard % to express like-strategy such as: starts with (%name), ends with (name%) or contains (%name%).
 	NameLike string `url:"nameLike,omitempty"`
 	// source Filter by the deployment source.
 	Source string `url:"source,omitempty"`
 	// WithoutSource Filter by the deployment source whereby source is equal to null.
 	WithoutSource string `url:"withoutSource,omitempty"`
-	// TenantIdIn Filter by a comma-separated list of tenant ids. A deployment must have
+	// TenantIDIn Filter by a comma-separated list of tenant ids. A deployment must have
 	// one of the given tenant ids.
-	TenantIdIn string `url:"tenantIdIn,omitempty"`
+	TenantIDIn string `url:"tenantIdIn,omitempty"`
 	// WithoutTenantID Only include deployments which belong to no tenant. Value may only
 	// be true, as false is the default behavior.
 	WithoutTenantID bool `url:"withoutTenantId,omitempty"`

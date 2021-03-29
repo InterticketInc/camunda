@@ -6,7 +6,7 @@ type DeleteOptions struct {
 	Cascade bool `url:"cascade,omitempty"`
 	// SkipCustomListeners true, if only the built-in ExecutionListeners should be notified with the end event.
 	SkipCustomListeners bool `url:"skipCustomListeners,omitempty"`
-	//SkipIoMappings true, if all input/output mappings should not be invoked.
+	// SkipIoMappings true, if all input/output mappings should not be invoked.
 	SkipIoMappings bool `url:"skipIoMappings,omitempty"`
 }
 

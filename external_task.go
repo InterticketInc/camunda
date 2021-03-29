@@ -100,7 +100,7 @@ type TopicLockConfig struct {
 	// 	Filter tasks without tenant id
 	WithoutTenantID *bool `json:"withoutTenantId,omitempty"`
 	// Filter tasks based on tenant ids
-	TenantIDIn *string `json:"tenantIdIn,omitempty"`
+	TenantIDIn []string `json:"tenantIdIn,omitempty"`
 	// A JSON object used for filtering tasks based on process instance variable values.
 	// A property name of the object represents a process variable name, while the property value
 	// represents the process variable value to filter tasks by
@@ -211,9 +211,9 @@ type Failure struct {
 // QueryExtendLock a query for ExtendLock request
 type QueryExtendLock struct {
 	//	An amount of time (in milliseconds). This is the new lock duration starting from the current moment
-	NewDuration *int `json:"newDuration,omitempty"`
+	NewDuration int `json:"newDuration,omitempty"`
 	// The ID of a worker who is locking the external task
-	WorkerID *string `json:"workerId,omitempty"`
+	WorkerID string `json:"workerId,omitempty"`
 }
 
 // QuerySetRetriesAsync a query for SetRetriesAsync request

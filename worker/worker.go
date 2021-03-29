@@ -3,11 +3,12 @@ package worker
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"math/rand"
 	"runtime/debug"
 	"time"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"go.pirat.app/pi/camunda"
 )
@@ -57,17 +58,18 @@ type Handler func(ctx *Context) error
 
 // Context external task context
 type Context struct {
-	Task   *camunda.ResLockedExternalTask
-	client *camunda.Client
+	Task     *camunda.ResLockedExternalTask
+	client   *camunda.Client
+	workerID string
 }
 
 // Complete a mark external task is complete
-func (c *Context) Complete(query CompleteRequest) error {
+func (c *Context) Complete(tc *TaskComplete) error {
 	tm := c.client.TaskManager()
 	return tm.Complete(c.Task.ID, camunda.QueryComplete{
 		WorkerID:       &c.Task.WorkerID,
-		Variables:      query.Variables,
-		LocalVariables: query.LocalVariables,
+		Variables:      tc.Variables,
+		LocalVariables: tc.LocalVariables,
 	})
 }
 
@@ -90,6 +92,21 @@ func (c *Context) HandleFailure(query TaskFailureRequest) error {
 		Retries:      query.Retries,
 		RetryTimeout: query.RetryTimeout,
 	})
+}
+
+// ExtendLock extending lock on specific task ID
+func (c *Context) ExtendLock(id string, duration int) error {
+	tm := c.client.TaskManager()
+	err := tm.ExtendLock(id, camunda.QueryExtendLock{
+		NewDuration: duration,
+		WorkerID:    c.workerID,
+	})
+
+	if err != nil {
+		return fmt.Errorf("error while extending lock: %w", err)
+	}
+
+	return nil
 }
 
 // AddHandler a add handler for external task
@@ -131,6 +148,7 @@ func (p *Worker) startPuller(req camunda.FetchAndLockRequest, handler Handler) {
 	}
 
 	delay := 0
+
 	for {
 		tasks, err := p.client.TaskManager().FetchAndLock(req)
 		if err != nil {
@@ -144,6 +162,7 @@ func (p *Worker) startPuller(req camunda.FetchAndLockRequest, handler Handler) {
 				RawJSON("req", bb).
 				Msgf("failed to pull message! sleeping: %d seconds", delay)
 			time.Sleep(time.Duration(delay) * time.Second)
+
 			continue
 		}
 		delay = 0
@@ -157,8 +176,9 @@ func (p *Worker) startPuller(req camunda.FetchAndLockRequest, handler Handler) {
 func (p *Worker) runWorker(handler Handler, tasksChan chan *camunda.ResLockedExternalTask) {
 	for task := range tasksChan {
 		p.handle(&Context{
-			Task:   task,
-			client: p.client,
+			Task:     task,
+			client:   p.client,
+			workerID: p.options.WorkerID,
 		}, handler)
 	}
 }
@@ -194,7 +214,5 @@ func (p *Worker) handle(ctx *Context, handler Handler) {
 				Err(err).
 				Msg("error send handle failure")
 		}
-
-		p.log.Error().Msg(msg)
 	}
 }

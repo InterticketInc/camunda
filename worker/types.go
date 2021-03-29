@@ -2,8 +2,8 @@ package worker
 
 import "go.pirat.app/pi/camunda"
 
-// CompleteRequest a query for Complete request
-type CompleteRequest struct {
+// TaskComplete a query for Complete request
+type TaskComplete struct {
 	// A JSON object containing variable key-value pairs
 	Variables camunda.Variables `json:"variables"`
 	// A JSON object containing variable key-value pairs.

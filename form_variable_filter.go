@@ -7,7 +7,7 @@ type FormVariableFilter struct {
 	// Allows restricting the list of requested variables to the variable
 	// names in the list.It is best practice to restrict the list of variables
 	// to the variables actually required by the form in order to minimize
-	// fetching of data.If the query parameter is ommitted all variables are
+	// fetching of data.If the query parameter is omitted all variables are
 	// fetched.If the query parameter contains non-existent variable names,
 	// the variable names are ignored.
 	VariableNames string `query:"variableNames,omitempty"`

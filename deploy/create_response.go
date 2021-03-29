@@ -11,9 +11,9 @@ type CreateResponse struct {
 	// The source of the deployment
 	Source string `json:"source"`
 	// The tenant id of the deployment
-	TenantID string `json:"tenant_id"`
+	TenantID string `json:"tenantId"`
 	// The time when the deployment was created
-	DeploymentTime camunda.Time `json:"deployment_time"`
+	DeploymentTime camunda.Time `json:"deploymentTime"`
 	// Link to the newly created deployment with method, href and rel
 	Links []camunda.ResLink `json:"links"`
 	// A JSON Object containing a property for each of the process definitions,

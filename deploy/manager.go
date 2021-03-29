@@ -2,11 +2,12 @@ package deploy
 
 import (
 	"bytes"
-	"go.pirat.app/pi/camunda"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"os"
+
+	"go.pirat.app/pi/camunda"
 )
 
 // Manager deployment manager instance. You can instantiate the instance from the camunda.Client instance
@@ -60,41 +61,48 @@ func (d *Manager) Get(id string) (deployment Deployment, err error) {
 	return
 }
 
-// Create creates a deployment.
-// See more at: https://docs.camunda.org/manual/latest/reference/rest/deployment/post-deployment/
-func (d *Manager) Create(dc *CreateRequest) (deployment *CreateResponse, err error) {
-	deployment = &CreateResponse{}
-	var data []byte
-	body := bytes.NewBuffer(data)
-	w := multipart.NewWriter(body)
-
+func (d *Manager) writeFields(dc *CreateRequest, w *multipart.Writer) (err error) {
 	if err = w.WriteField("deployment-name", dc.DeploymentName); err != nil {
-		return nil, err
+		return
 	}
 
 	if dc.EnableDuplicateFiltering {
 		if err = w.WriteField("enable-duplicate-filtering", "true"); err != nil {
-			return nil, err
+			return
 		}
 	}
 
 	if dc.DeployChangedOnly {
 		if err = w.WriteField("deploy-changed-only", "true"); err != nil {
-			return nil, err
+			return
 		}
 	}
 
 	if dc.DeploymentSource != "" {
 		if err = w.WriteField("deployment-source", dc.DeploymentSource); err != nil {
-			return nil, err
+			return
 		}
 	}
 
 	if dc.TenantID != "" {
 		if err = w.WriteField("tenant-id", dc.TenantID); err != nil {
-			return nil, err
+			return
 		}
 	}
+
+	return
+}
+
+// Create creates a deployment.
+// See more at: https://docs.camunda.org/manual/latest/reference/rest/deployment/post-deployment/
+func (d *Manager) Create(dc *CreateRequest) (cr *CreateResponse, err error) {
+	cr = &CreateResponse{}
+
+	var data []byte
+	body := bytes.NewBuffer(data)
+	w := multipart.NewWriter(body)
+
+	d.writeFields(dc, w)
 
 	for key, resource := range dc.Resources {
 		var fw io.Writer
@@ -129,9 +137,9 @@ func (d *Manager) Create(dc *CreateRequest) (deployment *CreateResponse, err err
 		return nil, err
 	}
 
-	err = d.client.Marshal(res, deployment)
+	err = d.client.Marshal(res, cr)
 
-	return deployment, err
+	return cr, err
 }
 
 // Redeploy a re-deploys an existing deployment.
