@@ -88,7 +88,7 @@ func (e *TaskManager) GetListPostCount(query QueryGetListPost) (int, error) {
 	resCount := ResponseCount{}
 	res, err := e.client.Post(
 		"/external-task/count",
-		map[string]string{},
+		nil,
 		query,
 	)
 	if err != nil {
@@ -101,12 +101,12 @@ func (e *TaskManager) GetListPostCount(query QueryGetListPost) (int, error) {
 
 // FetchAndLock fetches and locks a specific number of external tasks for execution by a worker.
 // Query can be restricted to specific task topics and for each task topic an individual lock time can be provided
-func (e *TaskManager) FetchAndLock(query QueryFetchAndLock) ([]*ResLockedExternalTask, error) {
+func (e *TaskManager) FetchAndLock(req FetchAndLockRequest) ([]*ResLockedExternalTask, error) {
 	var resp []*ResLockedExternalTask
 	res, err := e.client.Post(
 		"/external-task/fetchAndLock",
 		nil,
-		&query,
+		&req,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("request error: %w", err)
@@ -148,7 +148,7 @@ func (e *TaskManager) Unlock(id string) error {
 
 // ExtendLock a extends the timeout of the lock by a given amount of time
 func (e *TaskManager) ExtendLock(id string, query QueryExtendLock) error {
-	_, err := e.client.Post("/external-task/"+id+"/extendLock", map[string]string{}, &query)
+	_, err := e.client.Post("/external-task/"+id+"/extendLock", nil, &query)
 	return err
 }
 

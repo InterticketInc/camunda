@@ -58,8 +58,8 @@ type QueryGetListPost struct {
 	Sorting *QueryListPostSorting `json:"sorting,omitempty"`
 }
 
-// QueryFetchAndLock query for FetchAndLock request
-type QueryFetchAndLock struct {
+// FetchAndLockRequest query for FetchAndLock request
+type FetchAndLockRequest struct {
 	// Mandatory. The id of the worker on which behalf tasks are fetched. The returned tasks are Locked
 	// for that worker and can only be completed when providing the same worker id
 	WorkerID string `json:"workerId"`
@@ -72,11 +72,11 @@ type QueryFetchAndLock struct {
 	AsyncResponseTimeout *int `json:"asyncResponseTimeout,omitempty"`
 	// A JSON array of topic objects for which external tasks should be fetched.
 	// The returned tasks may be arbitrarily distributed among these topics
-	Topics []*QueryFetchAndLockTopic `json:"topics,omitempty"`
+	Topics []*TopicLockConfig `json:"topics,omitempty"`
 }
 
-// QueryFetchAndLockTopic a JSON array of topic objects for which external tasks should be fetched
-type QueryFetchAndLockTopic struct {
+// TopicLockConfig a JSON array of topic objects for which external tasks should be fetched
+type TopicLockConfig struct {
 	// Mandatory. The topic's name
 	TopicName string `json:"topicName"`
 	// Mandatory. The duration to lock the external tasks for in milliseconds
@@ -84,21 +84,21 @@ type QueryFetchAndLockTopic struct {
 	// A JSON array of String values that represent variable names. For each result task belonging to this topic,
 	// the given variables are returned as well if they are accessible from the external task's execution.
 	// If not provided - all variables will be fetched
-	Variables []*string `json:"variables,omitempty"`
+	Variables []string `json:"variables,omitempty"`
 	// If true only local variables will be fetched
 	LocalVariables *bool `json:"localVariables,omitempty"`
 	// A String value which enables the filtering of tasks based on process instance business key
-	BusinessKey *string `json:"businessKey,omitempty"`
+	BusinessKey string `json:"businessKey,omitempty"`
 	// Filter tasks based on process definition id
-	ProcessDefinitionID *string `json:"processDefinitionId,omitempty"`
+	ProcessDefinitionID string `json:"processDefinitionId,omitempty"`
 	// Filter tasks based on process definition ids
-	ProcessDefinitionIDIn *string `json:"processDefinitionIdIn,omitempty"`
+	ProcessDefinitionIDIn string `json:"processDefinitionIdIn,omitempty"`
 	// Filter tasks based on process definition key
-	ProcessDefinitionKey *string `json:"processDefinitionKey,omitempty"`
+	ProcessDefinitionKey string `json:"processDefinitionKey,omitempty"`
 	// Filter tasks based on process definition keys
 	ProcessDefinitionKeyIn *string `json:"processDefinitionKeyIn,omitempty"`
 	// 	Filter tasks without tenant id
-	WithoutTenantID *string `json:"withoutTenantId,omitempty"`
+	WithoutTenantID *bool `json:"withoutTenantId,omitempty"`
 	// Filter tasks based on tenant ids
 	TenantIDIn *string `json:"tenantIdIn,omitempty"`
 	// A JSON object used for filtering tasks based on process instance variable values.
@@ -131,7 +131,7 @@ type ResLockedExternalTask struct {
 	// The business key of the process instance the external task belongs to
 	BusinessKey string `json:"businessKey"`
 	// A JSON object containing a property for each of the requested variables
-	Variables map[string]Variable `json:"variables"`
+	Variables Variables `json:"variables"`
 }
 
 // Variable a variable
@@ -160,9 +160,9 @@ type VariableSet struct {
 // ValueInfo a value info in variable
 type ValueInfo struct {
 	// A string representation of the object's type name
-	ObjectTypeName *string `json:"objectTypeName"`
+	ObjectTypeName string `json:"objectTypeName,omitempty"`
 	// The serialization format used to store the variable.
-	SerializationDataFormat *string `json:"serializationDataFormat"`
+	SerializationDataFormat string `json:"serializationDataFormat,omitempty"`
 }
 
 // QueryComplete a query for Complete request
@@ -171,10 +171,10 @@ type QueryComplete struct {
 	// Must match the id of the worker who has most recently Locked the task
 	WorkerID *string `json:"workerId,omitempty"`
 	// A JSON object containing variable key-value pairs
-	Variables map[string]*Variable `json:"variables"`
+	Variables Variables `json:"variables"`
 	// A JSON object containing variable key-value pairs.
 	// Local variables are set only in the scope of external task
-	LocalVariables map[string]*Variable `json:"localVariables"`
+	LocalVariables Variables `json:"localVariables"`
 }
 
 // QueryHandleBPMNError a query for HandleBPMNError request
@@ -188,7 +188,7 @@ type QueryHandleBPMNError struct {
 	ErrorMessage *string `json:"errorMessage,omitempty"`
 	// A JSON object containing the variables which will be passed to the execution.
 	// Each key corresponds to a variable name and each value to a variable value
-	Variables *map[string]Variable `json:"variables"`
+	Variables Variables `json:"variables"`
 }
 
 // QueryHandleFailure a query for HandleFailure request
