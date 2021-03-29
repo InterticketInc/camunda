@@ -1,8 +1,10 @@
 package worker
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"math/rand"
 	"runtime/debug"
 	"time"
@@ -14,7 +16,7 @@ import (
 type Worker struct {
 	client  *camunda.Client
 	options *Options
-	logger  func(err error)
+	log     zerolog.Logger
 }
 
 // Options options for Worker
@@ -34,7 +36,7 @@ type Options struct {
 }
 
 // New a create new instance Worker
-func New(client *camunda.Client, options *Options, logger func(err error)) *Worker {
+func New(client *camunda.Client, options *Options) *Worker {
 	if options.WorkerID == "" {
 		rand.Seed(time.Now().UnixNano())
 		options.WorkerID = fmt.Sprintf("worker-%d", rand.Int())
@@ -43,7 +45,10 @@ func New(client *camunda.Client, options *Options, logger func(err error)) *Work
 	return &Worker{
 		client:  client,
 		options: options,
-		logger:  logger,
+		log: log.With().
+			Caller().
+			Str("worker", options.WorkerID).
+			Logger(),
 	}
 }
 
@@ -67,7 +72,7 @@ func (c *Context) Complete(query CompleteRequest) error {
 }
 
 // HandleBPMNError handle external task BPMN error
-func (c *Context) HandleBPMNError(query QueryHandleBPMNError) error {
+func (c *Context) HandleBPMNError(query camunda.QueryHandleBPMNError) error {
 	return c.client.TaskManager().HandleBPMNError(c.Task.ID, camunda.QueryHandleBPMNError{
 		WorkerID:     &c.Task.WorkerID,
 		ErrorCode:    query.ErrorCode,
@@ -77,9 +82,9 @@ func (c *Context) HandleBPMNError(query QueryHandleBPMNError) error {
 }
 
 // HandleFailure handle external task failure
-func (c *Context) HandleFailure(query QueryHandleFailure) error {
-	return c.client.TaskManager().HandleFailure(c.Task.ID, camunda.QueryHandleFailure{
-		WorkerID:     &c.Task.WorkerID,
+func (c *Context) HandleFailure(query TaskFailureRequest) error {
+	return c.client.TaskManager().TaskFailed(c.Task.ID, camunda.Failure{
+		WorkerID:     c.Task.WorkerID,
 		ErrorMessage: query.ErrorMessage,
 		ErrorDetails: query.ErrorDetails,
 		Retries:      query.Retries,
@@ -88,7 +93,7 @@ func (c *Context) HandleFailure(query QueryHandleFailure) error {
 }
 
 // AddHandler a add handler for external task
-func (p *Worker) AddHandler(topics []*camunda.QueryFetchAndLockTopic, handler Handler) {
+func (p *Worker) AddHandler(topics []*camunda.TopicLockConfig, handler Handler) {
 	if topics != nil && p.options.LockDuration != 0 {
 		for i := range topics {
 			v := topics[i]
@@ -103,7 +108,7 @@ func (p *Worker) AddHandler(topics []*camunda.QueryFetchAndLockTopic, handler Ha
 	msValue := int(p.options.LongPollingTimeout.Nanoseconds() / int64(time.Millisecond))
 	asyncResponseTimeout = &msValue
 
-	go p.startPuller(camunda.QueryFetchAndLock{
+	go p.startPuller(camunda.FetchAndLockRequest{
 		WorkerID:             p.options.WorkerID,
 		MaxTasks:             p.options.MaxTasks,
 		UsePriority:          p.options.UsePriority,
@@ -112,7 +117,7 @@ func (p *Worker) AddHandler(topics []*camunda.QueryFetchAndLockTopic, handler Ha
 	}, handler)
 }
 
-func (p *Worker) startPuller(query camunda.QueryFetchAndLock, handler Handler) {
+func (p *Worker) startPuller(req camunda.FetchAndLockRequest, handler Handler) {
 	tasksChan := make(chan *camunda.ResLockedExternalTask)
 
 	maxParallelTaskPerHandler := p.options.MaxParallelTaskPerHandler
@@ -125,19 +130,23 @@ func (p *Worker) startPuller(query camunda.QueryFetchAndLock, handler Handler) {
 		go p.runWorker(handler, tasksChan)
 	}
 
-	retries := 0
+	delay := 0
 	for {
-		tasks, err := p.client.TaskManager().FetchAndLock(query)
+		tasks, err := p.client.TaskManager().FetchAndLock(req)
 		if err != nil {
-			if retries < 60 {
-				retries++
+			if delay < 60 {
+				delay++
 			}
 
-			p.logger(fmt.Errorf("failed pull: %w, sleeping: %d seconds", err, retries))
-			time.Sleep(time.Duration(retries) * time.Second)
+			bb, _ := json.Marshal(req)
+
+			p.log.Error().Err(err).
+				RawJSON("req", bb).
+				Msgf("failed to pull message! sleeping: %d seconds", delay)
+			time.Sleep(time.Duration(delay) * time.Second)
 			continue
 		}
-		retries = 0
+		delay = 0
 
 		for _, task := range tasks {
 			tasksChan <- task
@@ -159,29 +168,33 @@ func (p *Worker) handle(ctx *Context, handler Handler) {
 		if r := recover(); r != nil {
 			errMessage := fmt.Sprintf("fatal error in task: %s", r)
 			errDetails := fmt.Sprintf("fatal error in task: %s\nStack trace: %s", r, string(debug.Stack()))
-			err := ctx.HandleFailure(QueryHandleFailure{
-				ErrorMessage: &errMessage,
-				ErrorDetails: &errDetails,
+			err := ctx.HandleFailure(TaskFailureRequest{
+				ErrorMessage: errMessage,
+				ErrorDetails: errDetails,
 			})
 			if err != nil {
-				p.logger(fmt.Errorf("error send handle failure: %w", err))
+				p.log.Error().
+					Err(err).
+					Msg("error send handle failure")
 			}
 
-			p.logger(errors.New(errDetails))
+			p.log.Error().Msg(errMessage)
 		}
 	}()
 
 	err := handler(ctx)
 	if err != nil {
-		errMessage := fmt.Sprintf("task error: %s", err)
-		err = ctx.HandleFailure(QueryHandleFailure{
-			ErrorMessage: &errMessage,
+		msg := fmt.Sprintf("task error: %s", err)
+		err = ctx.HandleFailure(TaskFailureRequest{
+			ErrorMessage: msg,
 		})
 
 		if err != nil {
-			p.logger(fmt.Errorf("error send handle failure: %w", err))
+			p.log.Error().
+				Err(err).
+				Msg("error send handle failure")
 		}
 
-		p.logger(errors.New(errMessage))
+		p.log.Error().Msg(msg)
 	}
 }

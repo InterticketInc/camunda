@@ -71,8 +71,8 @@ type ResActivityInstanceStatisticsIncident struct {
 	IncidentCount int `json:"incidentCount"`
 }
 
-// QueryProcessDefinitionBy path builder
-type QueryProcessDefinitionBy struct {
+// ProcessConfig path builder
+type ProcessConfig struct {
 	Id       string
 	Key      string
 	TenantId string
@@ -96,7 +96,7 @@ type ResBPMNProcessDefinition struct {
 }
 
 // Path a build path part
-func (q *QueryProcessDefinitionBy) Path() string {
+func (q *ProcessConfig) Path() string {
 	if q.Key != "" && q.TenantId != "" {
 		return fmt.Sprintf("key/%s/tenant-id/%s", q.Key, q.TenantId)
 	} else if q.Key != "" {
@@ -106,8 +106,8 @@ func (q *QueryProcessDefinitionBy) Path() string {
 	return q.Id
 }
 
-// ResStartedProcessDefinition ProcessDefinition for started
-type ResStartedProcessDefinition struct {
+// ProcessDefinition ProcessDefinition for started
+type ProcessDefinition struct {
 	// The id of the process definition
 	Id string `json:"id"`
 	// The id of the process definition

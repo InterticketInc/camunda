@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
-	"strings"
 	"time"
 )
 
@@ -63,32 +62,6 @@ func (e *Error) Error() string {
 	return e.Message
 }
 
-// Time a custom time format
-type Time struct {
-	time.Time
-}
-
-// UnmarshalJSON
-func (t *Time) UnmarshalJSON(b []byte) (err error) {
-	t.Time, err = time.Parse(DefaultDateTimeFormat, strings.Trim(string(b), "\""))
-	return
-}
-
-// MarshalJSON
-func (t *Time) MarshalJSON() ([]byte, error) {
-	timeStr := t.Time.Format(DefaultDateTimeFormat)
-	return []byte("\"" + timeStr + "\""), nil
-}
-
-// toCamundaTime return time formatted for camunda
-func toCamundaTime(dt time.Time) string {
-	if dt.IsZero() {
-		return ""
-	}
-
-	return dt.Format(DefaultDateTimeFormat)
-}
-
 // NewClient a create new instance Client
 func NewClient(options *ClientOptions) *Client {
 	client := &Client{
@@ -135,7 +108,7 @@ func (c *Client) SetCustomTransport(customHTTPTransport http.RoundTripper) {
 	}
 }
 
-func (c *Client) Post(path string, query map[string]string, v interface{}, contentType ...string) (res *http.Response, err error) {
+func (c *Client) Post(path string, query interface{}, v interface{}, contentType ...string) (res *http.Response, err error) {
 	body := new(bytes.Buffer)
 
 	ct := "application/json"
@@ -172,7 +145,7 @@ func (c *Client) Delete(path string, query interface{}) (res *http.Response, err
 	return c.do(http.MethodDelete, path, query, nil, "")
 }
 
-func (c *Client) doPost(path string, query map[string]string) (res *http.Response, err error) {
+func (c *Client) doPost(path string, query interface{}) (res *http.Response, err error) {
 	return c.do(http.MethodPost, path, query, nil, "")
 }
 
@@ -255,8 +228,11 @@ func (c *Client) Marshal(res *http.Response, v interface{}) error {
 
 func (c *Client) buildURL(path string, q interface{}) (string, error) {
 	// TODO: full refactor to use hard typed interfaces
-	if reflect.ValueOf(q).Kind() == reflect.Map {
-		log.Warn().Stack().Msg("Deprecated map query usage. Use struct with query tags instead!")
+	if q != nil && reflect.ValueOf(q).Kind() == reflect.Map {
+		bb, _ := json.Marshal(q)
+		log.Debug().Caller().Str("path", path).
+			RawJSON("map", bb).
+			Msg("Deprecated map query usage. Use struct with query tags instead!")
 
 		m, ok := q.(map[string]string)
 		if !ok {
@@ -295,7 +271,7 @@ func (c *Client) buildURL(path string, q interface{}) (string, error) {
 
 	u.RawQuery = v.Encode()
 
-	log.Debug().Str("url", u.String()).Msg("URL built")
+	//log.Debug().Str("url", u.String()).Msg("URL built")
 
 	return u.String(), nil
 }

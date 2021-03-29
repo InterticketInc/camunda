@@ -1,8 +1,8 @@
 package camunda
 
-// StartInstanceRequest a JSON object with the following properties: (at least an empty JSON object {}
+// InstanceParams a JSON object with the following properties: (at least an empty JSON object {}
 // or an empty request body)
-type StartInstanceRequest struct {
+type InstanceParams struct {
 	// A JSON object containing the variables the process is to be initialized with
 	Variables map[string]*Variable `json:"variables,omitempty"`
 	// The business key the process instance is to be initialized with.
@@ -33,7 +33,7 @@ type RestartInstanceRequest struct {
 	HistoricProcessInstanceQuery *string `json:"historicProcessInstanceQuery,omitempty"`
 	// Optional. A JSON array of instructions that specify which activities to start the process instance at.
 	// If this property is omitted, the process instance starts at its default blank start event
-	StartInstructions *[]StartInstructionsRequest `json:"startInstructions,omitempty"`
+	StartInstructions []*StartInstructionsRequest `json:"startInstructions,omitempty"`
 	// Skip execution listener invocation for activities that are started or ended as part of this request
 	// Note: This option is currently only respected when start instructions are submitted via
 	// the startInstructions property

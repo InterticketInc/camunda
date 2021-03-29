@@ -12,7 +12,7 @@ type ProcessManager struct {
 // and also optionally the number of incidents either grouped by incident types or for a specific incident type.
 // Note: This does not include historic data
 // https://docs.camunda.org/manual/latest/reference/rest/process-definition/get-activity-statistics/#query-parameters
-func (p *ProcessManager) GetActivityInstanceStatistics(by QueryProcessDefinitionBy, query map[string]string) (statistic []*ResActivityInstanceStatistics, err error) {
+func (p *ProcessManager) GetActivityInstanceStatistics(by ProcessConfig, query map[string]string) (statistic []*ResActivityInstanceStatistics, err error) {
 	res, err := p.client.Get("/process-definition/"+by.Path()+"/statistics", query)
 	if err != nil {
 		return
@@ -26,7 +26,7 @@ func (p *ProcessManager) GetActivityInstanceStatistics(by QueryProcessDefinition
 // If the process definition’s deployment contains an image resource with the same file name as the process definition,
 // the deployed image will be returned by the Get Diagram endpoint. Example: someProcess.bpmn and someProcess.png.
 // Supported file extentions for the image are: svg, png, jpg, and gif
-func (p *ProcessManager) GetDiagram(by QueryProcessDefinitionBy) (data []byte, err error) {
+func (p *ProcessManager) GetDiagram(by ProcessConfig) (data []byte, err error) {
 	res, err := p.client.Get("/process-definition/"+by.Path()+"/diagram", nil)
 	if err != nil {
 		return
@@ -41,7 +41,7 @@ func (p *ProcessManager) GetDiagram(by QueryProcessDefinitionBy) (data []byte, e
 // on the start event into account. If form fields are defined, the variable types and default values of the form
 // fields are taken into account
 // https://docs.camunda.org/manual/latest/reference/rest/process-definition/get-form-variables/#query-parameters
-func (p *ProcessManager) GetStartFormVariables(by QueryProcessDefinitionBy, filter *FormVariableFilter) (variables map[string]Variable, err error) {
+func (p *ProcessManager) GetStartFormVariables(by ProcessConfig, filter *FormVariableFilter) (variables map[string]Variable, err error) {
 	res, err := p.client.Get("/process-definition/"+by.Path()+"/form-variables", filter)
 	if err != nil {
 		return
@@ -81,7 +81,7 @@ func (p *ProcessManager) GetList(query map[string]string) (processDefinitions []
 
 // GetRenderedStartForm retrieves the rendered form for a process definition.
 // This method can be used for getting the HTML rendering of a Generated Task Form
-func (p *ProcessManager) GetRenderedStartForm(by QueryProcessDefinitionBy) (htmlForm string, err error) {
+func (p *ProcessManager) GetRenderedStartForm(by ProcessConfig) (htmlForm string, err error) {
 	res, err := p.client.Get("/process-definition/"+by.Path()+"/rendered-form", nil)
 	if err != nil {
 		return
@@ -98,7 +98,7 @@ func (p *ProcessManager) GetRenderedStartForm(by QueryProcessDefinitionBy) (html
 
 // GetStartFormKey retrieves the key of the start form for a process definition.
 // The form key corresponds to the FormData#formKey property in the engine
-func (p *ProcessManager) GetStartFormKey(by QueryProcessDefinitionBy) (resp *ResGetStartFormKey, err error) {
+func (p *ProcessManager) GetStartFormKey(by ProcessConfig) (resp *ResGetStartFormKey, err error) {
 	resp = &ResGetStartFormKey{}
 	res, err := p.client.Get("/process-definition/"+by.Path()+"/startForm", nil)
 	if err != nil {
@@ -124,7 +124,7 @@ func (p *ProcessManager) GetProcessInstanceStatistics(query map[string]string) (
 }
 
 // GetXML retrieves the BPMN 2.0 XML of a process definition
-func (p *ProcessManager) GetXML(by QueryProcessDefinitionBy) (resp *ResBPMNProcessDefinition, err error) {
+func (p *ProcessManager) GetXML(by ProcessConfig) (resp *ResBPMNProcessDefinition, err error) {
 	resp = &ResBPMNProcessDefinition{}
 	res, err := p.client.Get("/process-definition/"+by.Path()+"/xml", nil)
 	if err != nil {
@@ -136,7 +136,7 @@ func (p *ProcessManager) GetXML(by QueryProcessDefinitionBy) (resp *ResBPMNProce
 }
 
 // Get retrieves a process definition according to the ProcessDefinition interface in the engine
-func (p *ProcessManager) Get(by QueryProcessDefinitionBy) (processDefinition *ProcessDefinitionResponse, err error) {
+func (p *ProcessManager) Get(by ProcessConfig) (processDefinition *ProcessDefinitionResponse, err error) {
 	processDefinition = &ProcessDefinitionResponse{}
 	res, err := p.client.Get("/process-definition/"+by.Path(), nil)
 	if err != nil {
@@ -149,21 +149,21 @@ func (p *ProcessManager) Get(by QueryProcessDefinitionBy) (processDefinition *Pr
 
 // StartInstance instantiates a given process definition. Process variables and business key may be supplied
 // in the request body
-func (p *ProcessManager) StartInstance(by QueryProcessDefinitionBy, req StartInstanceRequest) (processDefinition *ResStartedProcessDefinition, err error) {
-	processDefinition = &ResStartedProcessDefinition{}
-	res, err := p.client.Post("/process-definition/"+by.Path()+"/start", map[string]string{}, &req)
+func (p *ProcessManager) StartInstance(config ProcessConfig, req InstanceParams) (pd *ProcessDefinition, err error) {
+	pd = &ProcessDefinition{}
+	res, err := p.client.Post("/process-definition/"+config.Path()+"/start", nil, &req)
 	if err != nil {
 		return
 	}
 
-	err = p.client.Marshal(res, processDefinition)
+	err = p.client.Marshal(res, pd)
 	return
 }
 
 // SubmitStartForm starts a process instance using a set of process variables and the business key.
 // If the start event has Form Field Metadata defined, the process engine will perform backend validation for any form
 // fields which have validators defined. See Documentation on Generated Task Forms
-func (p *ProcessManager) SubmitStartForm(by QueryProcessDefinitionBy, req ReqSubmitStartForm) (reps *ResSubmitStartForm, err error) {
+func (p *ProcessManager) SubmitStartForm(by ProcessConfig, req ReqSubmitStartForm) (reps *ResSubmitStartForm, err error) {
 	reps = &ResSubmitStartForm{}
 	res, err := p.client.Post("/process-definition/"+by.Path()+"/submit-form", map[string]string{}, &req)
 	if err != nil {
@@ -176,7 +176,7 @@ func (p *ProcessManager) SubmitStartForm(by QueryProcessDefinitionBy, req ReqSub
 
 // ActivateOrSuspendById activates or suspends a given process definition by id or by latest version
 // of process definition key
-func (p *ProcessManager) ActivateOrSuspendById(by QueryProcessDefinitionBy, req ReqActivateOrSuspendById) error {
+func (p *ProcessManager) ActivateOrSuspendById(by ProcessConfig, req ReqActivateOrSuspendById) error {
 	return p.client.doPutJSON("/process-definition/"+by.Path()+"/suspended", map[string]string{}, &req)
 }
 
@@ -187,19 +187,19 @@ func (p *ProcessManager) ActivateOrSuspendByKey(req ReqActivateOrSuspendByKey) e
 
 // UpdateHistoryTimeToLive updates history time to live for process definition.
 // The field is used within History cleanup
-func (p *ProcessManager) UpdateHistoryTimeToLive(by QueryProcessDefinitionBy, historyTimeToLive int) error {
+func (p *ProcessManager) UpdateHistoryTimeToLive(by ProcessConfig, historyTimeToLive int) error {
 	return p.client.doPutJSON("/process-definition/"+by.Path()+"/history-time-to-live", map[string]string{}, &map[string]int{"historyTimeToLive": historyTimeToLive})
 }
 
 // Delete deletes a process definition from a deployment by id
 // https://docs.camunda.org/manual/latest/reference/rest/process-definition/delete-process-definition/#query-parameters
-func (p *ProcessManager) Delete(by QueryProcessDefinitionBy, query map[string]string) error {
+func (p *ProcessManager) Delete(by ProcessConfig, query map[string]string) error {
 	_, err := p.client.Delete("/process-definition/"+by.Path(), query)
 	return err
 }
 
 // GetDeployedStartForm retrieves the deployed form that can be referenced from a start event. For further information please refer to User Guide
-func (p *ProcessManager) GetDeployedStartForm(by QueryProcessDefinitionBy) (htmlForm string, err error) {
+func (p *ProcessManager) GetDeployedStartForm(by ProcessConfig) (htmlForm string, err error) {
 	res, err := p.client.Get("/process-definition/"+by.Path()+"/deployed-start-form", nil)
 	if err != nil {
 		return
