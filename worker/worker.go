@@ -73,16 +73,6 @@ func (c *Context) Complete(tc *TaskComplete) error {
 	})
 }
 
-// HandleBPMNError handle external task BPMN error
-func (c *Context) HandleBPMNError(query camunda.QueryHandleBPMNError) error {
-	return c.client.TaskManager().HandleBPMNError(c.Task.ID, camunda.QueryHandleBPMNError{
-		WorkerID:     &c.Task.WorkerID,
-		ErrorCode:    query.ErrorCode,
-		ErrorMessage: query.ErrorMessage,
-		Variables:    query.Variables,
-	})
-}
-
 // HandleFailure handle external task failure
 func (c *Context) HandleFailure(query TaskFailureRequest) error {
 	return c.client.TaskManager().TaskFailed(c.Task.ID, camunda.Failure{
