@@ -14,7 +14,7 @@ type ListOptions struct {
 	WithoutSource string `url:"withoutSource,omitempty"`
 	// TenantIDIn Filter by a comma-separated list of tenant ids. A deployment must have
 	// one of the given tenant ids.
-	TenantIDIn string `url:"tenantIdIn,omitempty"`
+	TenantIDIn []string `url:"tenantIdIn,omitempty"`
 	// WithoutTenantID Only include deployments which belong to no tenant. Value may only
 	// be true, as false is the default behavior.
 	WithoutTenantID bool `url:"withoutTenantId,omitempty"`

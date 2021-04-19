@@ -35,7 +35,7 @@ type TaskFilter struct {
 	// ProcessDefinitionID Filter by the id of the process definition that an external task belongs to.
 	ProcessDefinitionID string `url:"processDefinitionId,omitempty"`
 	// TenantIDIn Filter by a comma-separated list of tenant ids. An external task must have one of the given tenant ids.
-	TenantIDIn string `url:"tenantIdIn,omitempty"`
+	TenantIDIn []string `url:"tenantIdIn,omitempty"`
 	// Active Only include active tasks. Value may only be true, as false matches any external task.
 	Active string `url:"active,omitempty"`
 	// PriorityHigherThanOrEquals Only include jobs with a priority higher than or equal to the given value. Value must be a valid long value.

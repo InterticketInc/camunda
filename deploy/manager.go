@@ -27,8 +27,8 @@ func NewManager(client *camunda.Client) *Manager {
 // the Get Deployment count method.
 // Query parameters described in the documentation:
 // https://docs.camunda.org/manual/latest/reference/rest/deployment/get-query/#query-parameters
-func (d *Manager) GetList(query *ListOptions) (deployments []*Deployment, err error) {
-	res, err := d.client.Get("/deployment", query)
+func (d *Manager) GetList(opts ListOptions) (deployments []*Deployment, err error) {
+	res, err := d.client.Get("/deployment", opts)
 	if err != nil {
 		return
 	}
