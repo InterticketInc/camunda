@@ -22,7 +22,6 @@ func NewMessageManager(client *Client) *MessageManager {
 // Implementation Reference.
 func (mm *MessageManager) SendMessage(request *MessageRequest) (*SendMessageResponse, error) {
 	res, err := mm.client.Post("/message", nil, request)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot send message: %w", err)
 	}
@@ -53,7 +52,7 @@ type MessageRequest struct {
 	// process definitions which belong to the tenant. Must not be supplied in conjunction with a withoutTenantId.
 	TenantID string `json:"tenantId,omitempty"`
 	// WithoutTenantID A Boolean value that indicates whether the message should only be correlated to executions and
-	//process definitions which belong to no tenant or not.
+	// process definitions which belong to no tenant or not.
 	// Value may only be true, as false is the default behavior.Must not be supplied in conjunction with a tenantId.
 	WithoutTenantID string `json:"withoutTenantId,omitempty"`
 	// ProcessInstanceID    Used to correlate the message to the process instance with the given id.
@@ -62,20 +61,20 @@ type MessageRequest struct {
 	// Has to be a JSON object containing key-value pairs that are matched against process instance variables during
 	// correlation.Each key is a variable name and each value a JSON variable value object with the following
 	// properties.
-	CorrelationKeys map[string]*Variable `json:"correlationKeys,omitempty"`
+	CorrelationKeys Variables `json:"correlationKeys,omitempty"`
 	// LocalCorrelationKeys Local variables used for correlation of executions (process instances) that wait for
 	// incoming messages. Has to be a JSON object containing key-value pairs that are matched against local variables
 	// during correlation.Each key is a variable name and each value a JSON variable value object with the following
 	// properties.
-	LocalCorrelationKeys map[string]*Variable `json:"localCorrelationKeys,omitempty"`
+	LocalCorrelationKeys Variables `json:"localCorrelationKeys,omitempty"`
 	// ProcessVariables A map of variables that is injected into the triggered execution or process instance after
 	// the message has been delivered. Each key is a variable name and each value a JSON variable value object with the
 	// following properties.
-	ProcessVariables map[string]*Variable `json:"processVariables,omitempty"`
+	ProcessVariables Variables `json:"processVariables,omitempty"`
 	// ProcessVariablesLocal    A map of local variables that is injected into the triggered execution or process
 	// instance after the message has been delivered.Each key is a variable name and each value a JSON variable value
 	// object with the following properties.
-	ProcessVariablesLocal map[string]*Variable `json:"processVariablesLocal"`
+	ProcessVariablesLocal Variables `json:"processVariablesLocal"`
 	// All A Boolean value that indicates whether the message should be correlated to exactly one entity or multiple
 	// entities. If the value is set to false, the message will be correlated to exactly one entity (execution or
 	// process definition).If the value is set to true, the message will be correlated to multiple executions and a
@@ -104,5 +103,5 @@ type SendMessageResponse struct {
 	Execution interface{} `json:"execution,omitempty"`
 	// Variables This property is returned if the variablesInResultEnabled is set to true.
 	// Contains a list of the process variables.
-	Variables map[string]*Variable
+	Variables Variables
 }

@@ -2,7 +2,7 @@ package camunda
 
 // ProcessInstanceQuery query struct for process instance
 type ProcessInstanceQuery struct {
-    //ProcessInstanceIDs	Filter by a comma-separated list of process instance ids.
+    // ProcessInstanceIDs	Filter by a comma-separated list of process instance ids.
     ProcessInstanceIDs []string `url:"processInstanceIds,omitempty"`
     // BusinessKey	Filter by process instance business key.
     BusinessKey string `url:"businessKey,omitempty"`
@@ -27,6 +27,7 @@ type ProcessInstanceQuery struct {
     //incidentMessage	Filter by the incident message. Exact match.
     //incidentMessageLike	Filter by the incident message that the parameter is a substring of.
     //tenantIdIn	Filter by a comma-separated list of tenant ids. A process instance must have one of the given tenant ids.
+    TenantIDIn []string `json:"tenantIdIn"`
     //withoutTenantId	Only include process instances which belong to no tenant. Value may only be true, as false is the default behavior.
     //activityIdIn	Filter by a comma-separated list of activity ids. A process instance must currently wait in a leaf activity with one of the given activity ids.
     //rootProcessInstances	Restrict the query to all process instances that are top level process instances.
@@ -48,16 +49,16 @@ type ProcessInstanceQuery struct {
 
 // ProcessInstance A JSON array of process instance objects. Each process instance object has the following properties:
 type ProcessInstance struct {
-    //id	String	The id of the process instance.
+    // id	String	The id of the process instance.
     ID string `json:"id"`
-    //definitionId	String	The id of the process definition that this process instance belongs to.
+    // definitionId	String	The id of the process definition that this process instance belongs to.
     DefinitionID string `json:"definitionId,omitempty"`
-    //businessKey	String	The business key of the process instance.
+    // businessKey	String	The business key of the process instance.
     BusinessKey string `json:"businessKey,omitempty"`
-    //caseInstanceId	String	The id of the case instance associated with the process instance.
+    // caseInstanceId	String	The id of the case instance associated with the process instance.
     CaseInstanceID string `json:"caseInstanceId,omitempty"`
-    //suspended	Boolean	A flag indicating whether the process instance is suspended or not.
+    // suspended	Boolean	A flag indicating whether the process instance is suspended or not.
     Suspended bool `json:"suspended,omitempty"`
-    //tenantId	String	The tenant id of the process instance.
+    // tenantId	String	The tenant id of the process instance.
     TenantID string `json:"tenantId,omitempty"`
 }

@@ -161,10 +161,10 @@ func (c *Client) do(method, path string, q interface{}, body io.Reader, contentT
 	}
 
 	req, err := http.NewRequest(method, u, body)
-
 	if err != nil {
 		return nil, err
 	}
+
 	req.Header.Set("User-Agent", c.userAgent)
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
@@ -272,7 +272,7 @@ func (c *Client) buildURL(path string, q interface{}) (string, error) {
 
 	u.RawQuery = v.Encode()
 
-	//log.Debug().Str("url", u.String()).Msg("URL built")
+	// log.Debug().Str("url", u.String()).Msg("URL built")
 
 	return u.String(), nil
 }

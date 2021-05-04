@@ -91,7 +91,6 @@ func (c *Context) ExtendLock(id string, duration int) error {
 		NewDuration: duration,
 		WorkerID:    c.workerID,
 	})
-
 	if err != nil {
 		return fmt.Errorf("error while extending lock: %w", err)
 	}
