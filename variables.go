@@ -33,6 +33,19 @@ func (v Variables) Int(name string) (int, error) {
 	return v[name].Value.(int), nil
 }
 
+func (v Variables) JSON(name string) ([]byte, error) {
+	if _, ok := v[name]; !ok {
+		return nil, fmt.Errorf("variable '%s' not found", name)
+	}
+
+	t := strings.ToLower(v[name].Type)
+	if t != "JSON" {
+		return nil, fmt.Errorf("cannot convert value type %s to JSON", v[name].Type)
+	}
+
+	return json.Marshal(v[name].Value)
+}
+
 // Map mapping values to original map format without type definitions and valueInfo fields
 func (v Variables) Map() map[string]interface{} {
 	m := make(map[string]interface{}, 0)
@@ -50,12 +63,12 @@ func (v Variables) AddString(key string, value string) {
 	}
 }
 
-func (v Variables) AddJson(key string, val interface{}) {
+func (v Variables) AddJSON(key string, val interface{}) {
 	bb, _ := json.Marshal(val)
-	v.AddJsonBytes(key, bb)
+	v.AddJSONBytes(key, bb)
 }
 
-func (v Variables) AddJsonBytes(key string, bb []byte) {
+func (v Variables) AddJSONBytes(key string, bb []byte) {
 	v[key] = &Variable{
 		Value: string(bb),
 		Type:  "Json",

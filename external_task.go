@@ -181,14 +181,14 @@ type QueryComplete struct {
 type QueryHandleBPMNError struct {
 	// The id of the worker that reports the failure.
 	// Must match the id of the worker who has most recently Locked the task
-	WorkerID *string `json:"workerId,omitempty"`
+	WorkerID string `json:"workerId"`
 	// An error code that indicates the predefined error. Is used to identify the BPMN error handler
-	ErrorCode *string `json:"errorCode,omitempty"`
+	ErrorCode string `json:"errorCode"`
 	// An error message that describes the error
-	ErrorMessage *string `json:"errorMessage,omitempty"`
+	ErrorMessage string `json:"errorMessage"`
 	// A JSON object containing the variables which will be passed to the execution.
 	// Each key corresponds to a variable name and each value to a variable value
-	Variables Variables `json:"variables"`
+	Variables Variables `json:"variables,omitempty"`
 }
 
 // Failure a query for Failure request
