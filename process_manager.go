@@ -263,7 +263,9 @@ func (p *ProcessManager) ListInstances(q ProcessInstanceQuery) ([]*ProcessInstan
 
 // GetInstanceVars Retrieves all variables of a given process instance by id.
 func (p *ProcessManager) GetInstanceVars(instanceId string) (Variables, error) {
-    res, err := p.client.Get(fmt.Sprintf("/process-instance/%s/variables", instanceId), nil)
+    res, err := p.client.Get(fmt.Sprintf("/process-instance/%s/variables", instanceId),
+        map[string]string{"deserializeValues": "false",
+        })
     if err != nil {
         return nil, fmt.Errorf("cannot invoke client: %w", err)
     }

@@ -38,12 +38,11 @@ func (v Variables) JSON(name string) ([]byte, error) {
 		return nil, fmt.Errorf("variable '%s' not found", name)
 	}
 
-	t := strings.ToLower(v[name].Type)
-	if t != "JSON" {
-		return nil, fmt.Errorf("cannot convert value type %s to JSON", v[name].Type)
+	if !strings.EqualFold(v[name].Type,"Json") {
+		return nil, fmt.Errorf("cannot convert value type %s to Json", v[name].Type)
 	}
 
-	return json.Marshal(v[name].Value)
+	return []byte(v[name].Value.(string)), nil
 }
 
 // Map mapping values to original map format without type definitions and valueInfo fields
