@@ -203,9 +203,9 @@ type Failure struct {
 	// A number of how often the task should be retried.
 	// Must be >= 0. If this is 0, an incident is created and the task cannot be fetched anymore unless
 	// the retries are increased again. The incident's message is set to the errorMessage parameter
-	Retries *int `json:"retries,omitempty"`
+	Retries int `json:"retries,omitempty"`
 	// A timeout in milliseconds before the external task becomes available again for fetching. Must be >= 0
-	RetryTimeout *int `json:"retryTimeout,omitempty"`
+	RetryTimeout int `json:"retryTimeout,omitempty"`
 }
 
 // QueryExtendLock a query for ExtendLock request
