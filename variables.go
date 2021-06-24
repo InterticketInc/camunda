@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 type Variables map[string]*Variable
@@ -38,11 +40,25 @@ func (v Variables) JSON(name string) ([]byte, error) {
 		return nil, fmt.Errorf("variable '%s' not found", name)
 	}
 
-	if !strings.EqualFold(v[name].Type,"Json") {
+	if !strings.EqualFold(v[name].Type, "Json") {
 		return nil, fmt.Errorf("cannot convert value type %s to Json", v[name].Type)
 	}
 
 	return []byte(v[name].Value.(string)), nil
+}
+
+// MarshalField marshals a field to the destination interface
+func (v Variables) MarshalField(name string, field interface{}) error {
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		TagName: "json",
+		Result:  field,
+	})
+
+	if err != nil {
+		return fmt.Errorf("cannot create decoder: %w", err)
+	}
+
+	return decoder.Decode(v[name].Value)
 }
 
 // Map mapping values to original map format without type definitions and valueInfo fields
@@ -71,6 +87,32 @@ func (v Variables) AddJSONBytes(key string, bb []byte) {
 	v[key] = &Variable{
 		Value: string(bb),
 		Type:  "Json",
+	}
+}
+
+func (v Variables) AddList(key string, values interface{}) {
+	jsonString, _ := json.Marshal(values)
+
+	v[key] = &Variable{
+		Value: string(jsonString),
+		Type:  "Object",
+		ValueInfo: &ValueInfo{
+			ObjectTypeName:          "java.util.ArrayList",
+			SerializationDataFormat: "application/json",
+		},
+	}
+}
+
+func (v Variables) AddObject(key string, value interface{}) {
+	jsonString, _ := json.Marshal(value)
+
+	v[key] = &Variable{
+		Value: string(jsonString),
+		Type:  "Object",
+		ValueInfo: &ValueInfo{
+			ObjectTypeName:          "java.util.LinkedHashMap",
+			SerializationDataFormat: "application/json",
+		},
 	}
 }
 
