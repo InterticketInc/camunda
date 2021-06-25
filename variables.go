@@ -58,7 +58,12 @@ func (v Variables) MarshalField(name string, field interface{}) error {
 		return fmt.Errorf("cannot create decoder: %w", err)
 	}
 
-	return decoder.Decode(v[name].Value)
+	val, ok := v[name]
+	if !ok {
+		return fmt.Errorf("context variable not found: %s", name)
+	}
+
+	return decoder.Decode(val.Value)
 }
 
 // Map mapping values to original map format without type definitions and valueInfo fields
