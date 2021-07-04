@@ -6,6 +6,11 @@ import (
     "strings"
 
     "github.com/mitchellh/mapstructure"
+    "errors"
+)
+
+var (
+    ErrContextVarNotFound = errors.New("context variable not found")
 )
 
 type Variables map[string]*Variable
@@ -61,7 +66,7 @@ func (v Variables) MarshalField(name string, field interface{}) error {
 
     val, ok := v[name]
     if !ok {
-        return fmt.Errorf("context variable not found: %s", name)
+        return ErrContextVarNotFound
     }
 
     switch val.Value.(type) {

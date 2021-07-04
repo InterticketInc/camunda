@@ -3,30 +3,36 @@ package camtest
 import (
     "go.pirat.app/pi/camunda"
     "go.pirat.app/pi/camunda/worker"
-    "log"
     "reflect"
     "encoding/json"
+    "errors"
 )
+
+type BpmnError struct {
+    Code    int
+    Message string
+}
 
 type ContextStub struct {
     *worker.ContextImpl
-    failure bool
-    error   bool
 
-    vars camunda.Variables
+    vars   camunda.Variables
+    failed *worker.TaskFailureRequest
+    error  *BpmnError
 }
 
 func CreateTestContext(vars camunda.Variables) *ContextStub {
     task := &camunda.ResLockedExternalTask{
         Variables:   vars,
         BusinessKey: "test-business-key",
+        TaskBase: &camunda.TaskBase{
+            ID: "test-task-id",
+        },
     }
 
     return &ContextStub{
         ContextImpl: worker.NewContext(nil, task, "test-context-worker"),
         vars:        vars,
-        failure:     false,
-        error:       false,
     }
 }
 
@@ -38,8 +44,24 @@ func (w *ContextStub) Complete(tc *worker.TaskComplete) error {
     for key, val := range tc.Variables {
         if val.Type == "Object" && reflect.TypeOf(val.Value).Kind() == reflect.String {
             m := make(map[string]interface{})
-            _ = json.Unmarshal([]byte(val.Value.(string)), &m)
-            val.Value = m
+            err := json.Unmarshal([]byte(val.Value.(string)), &m)
+
+            if err != nil {
+                var te *json.UnmarshalTypeError
+
+                if errors.As(err, &te) && te.Value == "array" {
+                    var l []interface{}
+                    _ = json.Unmarshal([]byte(val.Value.(string)), &l)
+
+                    val.ValueInfo = &camunda.ValueInfo{
+                        ObjectTypeName:          "java.util.ArrayList",
+                        SerializationDataFormat: "application/json",
+                    }
+                    val.Value = l
+                }
+            } else {
+                val.Value = m
+            }
         }
 
         w.vars[key] = val
@@ -49,15 +71,18 @@ func (w *ContextStub) Complete(tc *worker.TaskComplete) error {
 }
 
 func (w *ContextStub) HandleFailure(query worker.TaskFailureRequest) error {
-    log.Printf("Failure handler called: %s Details: %s \n", query.ErrorMessage, query.ErrorDetails)
-    w.failure = true
+    w.error = nil
+    w.failed = &query
+
     return nil
 }
 
-func (w ContextStub) HandleBPMNError(code int, message string) error {
-    w.error = true
-
-    log.Printf("BPMN error received: %d message: %s\n", code, message)
+func (w *ContextStub) HandleBPMNError(code int, message string) error {
+    w.failed = nil
+    w.error = &BpmnError{
+        Code:    code,
+        Message: message,
+    }
 
     return nil
 }
@@ -76,4 +101,12 @@ func (w ContextStub) StopExtender() {
 
 func (w *ContextStub) Variables() camunda.Variables {
     return w.vars
+}
+
+func (w ContextStub) Failed() *worker.TaskFailureRequest {
+    return w.failed
+}
+
+func (w ContextStub) Error() *BpmnError {
+    return w.error
 }
