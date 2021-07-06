@@ -69,6 +69,7 @@ type Context interface {
     StartLockExtender()
     StopExtender()
     TaskID() string
+    SendMessage(messageName string, vars camunda.Variables) error
 }
 
 // NewContext creates a new worker task ContextImpl
@@ -177,6 +178,23 @@ func (c *ContextImpl) StopExtender() {
         c.done <- struct{}{}
         close(c.done)
     }
+}
+
+func (c *ContextImpl) SendMessage(messageName string, vars camunda.Variables) error {
+    mm := camunda.NewMessageManager(c.client)
+    _, err := mm.SendMessage(&camunda.MessageRequest{
+        ProcessVariables:  vars,
+        MessageName:       messageName,
+        ProcessInstanceID: c.Task.ProcessInstanceID,
+        All: true,
+    })
+
+    if err != nil {
+        log.Err(err).Msgf("cannot correlate message: %s", messageName)
+        return fmt.Errorf("cannot correlate message: %w", err)
+    }
+
+    return nil
 }
 
 // AddHandler a add handler for external task
