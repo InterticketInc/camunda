@@ -1,6 +1,6 @@
 package worker
 
-import "go.pirat.app/pi/camunda"
+import "github.com/interticketinc/camunda"
 
 // TaskComplete a query for Complete request
 type TaskComplete struct {

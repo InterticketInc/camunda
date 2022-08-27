@@ -7,7 +7,7 @@ import (
 	"mime/multipart"
 	"os"
 
-	"go.pirat.app/pi/camunda"
+	"github.com/interticketinc/camunda"
 )
 
 // Manager deployment manager instance. You can instantiate the instance from the camunda.Client instance

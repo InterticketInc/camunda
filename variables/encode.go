@@ -1,6 +1,6 @@
 package variables
 
-import "go.pirat.app/pi/camunda"
+import "github.com/interticketinc/camunda"
 
 func Unmarshal(vm map[string]*camunda.Variable, v interface{}) {
 }

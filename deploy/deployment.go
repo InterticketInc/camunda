@@ -1,6 +1,6 @@
 package deploy
 
-import "go.pirat.app/pi/camunda"
+import "github.com/interticketinc/camunda"
 
 // Deployment a JSON array of deployment objects
 type Deployment struct {

@@ -1,6 +1,6 @@
 package deploy
 
-import "go.pirat.app/pi/camunda"
+import "github.com/interticketinc/camunda"
 
 // CreateResponse a JSON object corresponding to the DeploymentWithDefinitions interface in the engine
 type CreateResponse struct {
