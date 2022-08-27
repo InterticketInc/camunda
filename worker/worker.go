@@ -69,6 +69,8 @@ type Context interface {
 	StartLockExtender()
 	StopExtender()
 	TaskID() string
+	TopicName() string
+	Retries() int
 }
 
 // NewContext creates a new worker task ContextImpl
@@ -96,6 +98,14 @@ func (c *ContextImpl) TaskID() string {
 
 func (c *ContextImpl) Variables() camunda.Variables {
 	return c.Task.Variables
+}
+
+func (c *ContextImpl) TopicName() string {
+	return c.Task.TopicName
+}
+
+func (c *ContextImpl) Retries() int {
+	return c.Task.Retries
 }
 
 // Complete a mark external task is complete

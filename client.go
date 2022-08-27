@@ -63,7 +63,7 @@ func (e *Error) Error() string {
 	return e.Message
 }
 
-// NewClient a create new instance Client
+// NewClient creates new instance of Client
 func NewClient(options *ClientOptions) *Client {
 	client := &Client{
 		httpClient: &http.Client{
